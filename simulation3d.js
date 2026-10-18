@@ -1,7 +1,8 @@
 /**
  * QueueFlow 3D - Three.js Interactive M/M/1 Queue Simulation
  * Light Theme Edition with 3D Procedural Walking Humans,
- * 90-Degree Side Departure Corridor, Real-Time Engine, and Time Accelerator.
+ * Fixed Waypoint Navigation Paths, 90-Degree Side Departure Corridor,
+ * Real-Time Engine, and Interactive Time Accelerator.
  */
 
 class QueueSimulation3D {
@@ -41,12 +42,25 @@ class QueueSimulation3D {
     this.serverSpot = null;
     this.queueLaneMarkers = [];
 
-    // Path Coordinates (Queue from -X to 0, Service at (0.4, 0, 0), Exit at 90° to +Z)
+    // Path Waypoints & Coordinates
+    // 1. Arrival Corridor: along Z = 0 from X = -14 to X = 0.6
     this.SPAWN_POS = new THREE.Vector3(-14, 0, 0);
-    this.SERVICE_POS = new THREE.Vector3(0.4, 0, 0);
+    this.SERVICE_POS = new THREE.Vector3(0.6, 0, 0);
     this.DESK_POS = new THREE.Vector3(2.0, 0, 0);
-    this.EXIT_POS = new THREE.Vector3(0.4, 0, 9.5); // 90° Turn towards +Z side corridor
     this.SLOT_SPACING = 1.5;
+
+    // 2. Fixed Exit Path Waypoints (Customers ALWAYS traverse these exact points after service)
+    // Counter (0.6, 0, 0) -> Step out to (0.6, 0, 2.0) -> Turn 90° right to (2.8, 0, 2.0)
+    // -> Turn 90° left into exit corridor to (2.8, 0, 6.0) -> Reach exit arch at (2.8, 0, 9.5)
+    // -> Pass through exit portal to (2.8, 0, 11.5)
+    this.FIXED_EXIT_WAYPOINTS = [
+      new THREE.Vector3(0.6, 0, 2.0),
+      new THREE.Vector3(2.8, 0, 2.0),
+      new THREE.Vector3(2.8, 0, 6.0),
+      new THREE.Vector3(2.8, 0, 9.5),
+      new THREE.Vector3(2.8, 0, 11.5)
+    ];
+    this.FINAL_EXIT_POS = new THREE.Vector3(2.8, 0, 9.5);
 
     // Humanoid materials palette (modern light-theme friendly colors)
     this.clothingPalettes = [
@@ -70,11 +84,11 @@ class QueueSimulation3D {
     // 1. Scene with Light Studio Environment
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xf8fafc); // Clean light slate-50
-    this.scene.fog = new THREE.FogExp2(0xf8fafc, 0.018);
+    this.scene.fog = new THREE.FogExp2(0xf8fafc, 0.016);
 
-    // 2. Camera Setup
+    // 2. Camera Setup (Positioned to clearly capture arrival line and exit corridor)
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    this.camera.position.set(-2, 14, 20);
+    this.camera.position.set(-1, 16, 22);
 
     // 3. Renderer with Soft Shadows
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
@@ -93,14 +107,14 @@ class QueueSimulation3D {
       this.controls.dampingFactor = 0.05;
       this.controls.maxPolarAngle = Math.PI / 2 - 0.05; // Stay above ground
       this.controls.minDistance = 6;
-      this.controls.maxDistance = 45;
-      this.controls.target.set(0, 1.0, 2);
+      this.controls.maxDistance = 50;
+      this.controls.target.set(0, 1.0, 3.0);
     }
 
     // 5. Studio Lighting
     this.setupLighting();
 
-    // 6. Modern Light Platform & 90-Degree Side Corridor
+    // 6. Platform Architecture & Stanchion Guides
     this.setupEnvironment();
 
     // 7. Service Desk & Queue Lane
@@ -124,67 +138,137 @@ class QueueSimulation3D {
     this.scene.add(ambientLight);
 
     // Main studio key light casting soft shadows
-    const dirLight = new THREE.DirectionalLight(0xfffaf0, 1.5);
-    dirLight.position.set(10, 22, 12);
+    const dirLight = new THREE.DirectionalLight(0xfffaf0, 1.55);
+    dirLight.position.set(12, 24, 14);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
     dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 70;
+    dirLight.shadow.camera.far = 75;
     dirLight.shadow.camera.left = -22;
     dirLight.shadow.camera.right = 22;
-    dirLight.shadow.camera.top = 18;
-    dirLight.shadow.camera.bottom = -18;
+    dirLight.shadow.camera.top = 20;
+    dirLight.shadow.camera.bottom = -20;
     dirLight.shadow.bias = -0.0004;
     this.scene.add(dirLight);
 
-    // Soft sky fill light from opposite angle
+    // Soft sky fill light
     const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.7);
     fillLight.position.set(-15, 12, -10);
     this.scene.add(fillLight);
 
-    // Subtle counter accent light
-    const counterAccent = new THREE.PointLight(0x38bdf8, 1.0, 15);
-    counterAccent.position.set(2, 4, 0);
+    // Counter accent spotlight
+    const counterAccent = new THREE.PointLight(0x38bdf8, 1.2, 16);
+    counterAccent.position.set(2, 4.5, 0);
     this.scene.add(counterAccent);
   }
 
   setupEnvironment() {
-    // 1. Main Queue Platform Floor (along X-axis)
-    const mainPlatformGeo = new THREE.BoxGeometry(32, 0.4, 8);
     const platformMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 0.85,
       metalness: 0.05
     });
+
+    // 1. Main Queue Platform Floor (covers arrival lane and desk)
+    const mainPlatformGeo = new THREE.BoxGeometry(26, 0.4, 9);
     const mainPlatform = new THREE.Mesh(mainPlatformGeo, platformMat);
-    mainPlatform.position.set(-3, -0.2, 0);
+    mainPlatform.position.set(-3.5, -0.2, 0.5);
     mainPlatform.receiveShadow = true;
     this.scene.add(mainPlatform);
 
-    // 2. 90-Degree Side Departure Corridor Platform (along +Z axis)
-    const sideCorridorGeo = new THREE.BoxGeometry(6, 0.4, 11);
-    const sidePlatform = new THREE.Mesh(sideCorridorGeo, platformMat);
-    sidePlatform.position.set(0.4, -0.2, 5.5);
+    // 2. 90-Degree Side Departure Platform Floor (covers the full fixed exit corridor)
+    const sidePlatformGeo = new THREE.BoxGeometry(7, 0.4, 13);
+    const sidePlatform = new THREE.Mesh(sidePlatformGeo, platformMat);
+    sidePlatform.position.set(2.8, -0.2, 6.5);
     sidePlatform.receiveShadow = true;
     this.scene.add(sidePlatform);
 
     // 3. Crisp Ground Grid Overlay
-    const gridHelper = new THREE.GridHelper(36, 36, 0x94a3b8, 0xe2e8f0);
-    gridHelper.position.set(0, 0.005, 2);
+    const gridHelper = new THREE.GridHelper(38, 38, 0x94a3b8, 0xe2e8f0);
+    gridHelper.position.set(0, 0.005, 3);
     this.scene.add(gridHelper);
 
-    // 4. Modern Border Edges
-    const mainEdgeGeo = new THREE.BoxGeometry(32.1, 0.05, 8.1);
-    const edgeMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.5 });
-    const mainEdge = new THREE.Mesh(mainEdgeGeo, edgeMat);
-    mainEdge.position.set(-3, 0.02, 0);
-    this.scene.add(mainEdge);
+    // 4. Stanchions and Retractable Belt Barrier along Queue and Exit
+    this.setupStanchionsAndBarriers();
+  }
 
-    const sideEdgeGeo = new THREE.BoxGeometry(6.1, 0.05, 11.1);
-    const sideEdge = new THREE.Mesh(sideEdgeGeo, edgeMat);
-    sideEdge.position.set(0.4, 0.02, 5.5);
-    this.scene.add(sideEdge);
+  setupStanchionsAndBarriers() {
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.2 });
+    const beltMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.6 });
+
+    const createPost = (x, z) => {
+      const group = new THREE.Group();
+      group.position.set(x, 0, z);
+
+      // Chrome post cylinder
+      const poleGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.9, 12);
+      const pole = new THREE.Mesh(poleGeo, postMat);
+      pole.position.y = 0.45;
+      pole.castShadow = true;
+      group.add(pole);
+
+      // Weighted round base
+      const baseGeo = new THREE.CylinderGeometry(0.16, 0.18, 0.04, 16);
+      const base = new THREE.Mesh(baseGeo, postMat);
+      base.position.y = 0.02;
+      group.add(base);
+
+      // Top cap sphere
+      const capGeo = new THREE.SphereGeometry(0.06, 12, 12);
+      const cap = new THREE.Mesh(capGeo, postMat);
+      cap.position.y = 0.92;
+      group.add(cap);
+
+      this.scene.add(group);
+      return group;
+    };
+
+    const createBelt = (x1, z1, x2, z2) => {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const length = Math.hypot(dx, dz);
+      const angle = Math.atan2(dx, dz);
+
+      const beltGeo = new THREE.BoxGeometry(0.02, 0.05, length);
+      const belt = new THREE.Mesh(beltGeo, beltMat);
+      belt.position.set((x1 + x2) / 2, 0.78, (z1 + z2) / 2);
+      belt.rotation.y = angle;
+      this.scene.add(belt);
+    };
+
+    // Stanchions along Entrance Queue Lane (top side at Z = -1.0)
+    for (let x = -13; x <= 0; x += 2.6) {
+      createPost(x, -1.0);
+    }
+    createBelt(-13, -1.0, 0, -1.0);
+
+    // Stanchions along Entrance Queue Lane (bottom side at Z = 1.0)
+    for (let x = -13; x <= -1.5; x += 2.6) {
+      createPost(x, 1.0);
+    }
+    createBelt(-13, 1.0, -1.5, 1.0);
+
+    // Corner divider post between counter and exit path
+    createPost(0.6, 1.0);
+
+    // Stanchions along Exit Corridor (Left side barrier: separates counter from exit walkway)
+    const exitPostsLeft = [
+      { x: 1.6, z: 2.8 },
+      { x: 1.6, z: 5.5 },
+      { x: 1.6, z: 8.5 }
+    ];
+    exitPostsLeft.forEach(p => createPost(p.x, p.z));
+    createBelt(1.6, 2.8, 1.6, 8.5);
+
+    // Stanchions along Exit Corridor (Right side outer barrier)
+    const exitPostsRight = [
+      { x: 4.0, z: 2.0 },
+      { x: 4.0, z: 5.5 },
+      { x: 4.0, z: 8.5 }
+    ];
+    exitPostsRight.forEach(p => createPost(p.x, p.z));
+    createBelt(4.0, 2.0, 4.0, 8.5);
   }
 
   setupServerStation() {
@@ -192,7 +276,7 @@ class QueueSimulation3D {
     stationGroup.position.copy(this.DESK_POS);
 
     // Modern Executive Service Desk
-    const deskGeo = new THREE.BoxGeometry(1.6, 1.1, 3.4);
+    const deskGeo = new THREE.BoxGeometry(1.6, 1.1, 3.2);
     const deskMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b, // Deep elegant slate
       roughness: 0.4,
@@ -205,7 +289,7 @@ class QueueSimulation3D {
     stationGroup.add(desk);
 
     // Oak wooden desktop trim
-    const topTrimGeo = new THREE.BoxGeometry(1.7, 0.08, 3.5);
+    const topTrimGeo = new THREE.BoxGeometry(1.7, 0.08, 3.3);
     const topTrimMat = new THREE.MeshStandardMaterial({
       color: 0xd97706, // Warm oak accent
       roughness: 0.6
@@ -215,7 +299,7 @@ class QueueSimulation3D {
     topTrim.castShadow = true;
     stationGroup.add(topTrim);
 
-    // Receptionist Workstation Screen (facing clerk at +X)
+    // Receptionist Workstation Screen
     const monitorGeo = new THREE.BoxGeometry(0.08, 0.6, 1.0);
     const monitorMat = new THREE.MeshStandardMaterial({
       color: 0x0284c7,
@@ -227,12 +311,12 @@ class QueueSimulation3D {
     monitor.position.set(-0.2, 1.48, 0);
     stationGroup.add(monitor);
 
-    // 3D Service Agent (Clerk standing behind desk facing customer)
+    // 3D Service Agent (Clerk standing behind desk facing customer at -X)
     const clerkGroup = new THREE.Group();
     clerkGroup.position.set(0.9, 0, 0);
     clerkGroup.rotation.y = -Math.PI / 2; // Facing the customer
 
-    // Clerk Torso (Formal white/cyan shirt)
+    // Clerk Torso
     const cTorsoGeo = new THREE.BoxGeometry(0.38, 0.55, 0.22);
     const cTorsoMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.5 });
     const cTorso = new THREE.Mesh(cTorsoGeo, cTorsoMat);
@@ -255,7 +339,7 @@ class QueueSimulation3D {
     cHair.position.y = 1.72;
     clerkGroup.add(cHair);
 
-    // Clerk Pants/Legs
+    // Clerk Legs
     const cLegGeo = new THREE.BoxGeometry(0.32, 0.85, 0.20);
     const cLegMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7 });
     const cLegs = new THREE.Mesh(cLegGeo, cLegMat);
@@ -265,11 +349,11 @@ class QueueSimulation3D {
     this.clerkAvatar = clerkGroup;
     stationGroup.add(clerkGroup);
 
-    // Overhead Status Beacon
+    // Overhead Status Beacon Post
     const beaconPostGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.8, 12);
     const beaconPostMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8, roughness: 0.3 });
     const beaconPost = new THREE.Mesh(beaconPostGeo, beaconPostMat);
-    beaconPost.position.set(0, 2.1, -1.6);
+    beaconPost.position.set(0, 2.1, -1.5);
     stationGroup.add(beaconPost);
 
     const beaconGeo = new THREE.SphereGeometry(0.2, 16, 16);
@@ -280,17 +364,17 @@ class QueueSimulation3D {
       roughness: 0.1
     });
     const beacon = new THREE.Mesh(beaconGeo, this.statusLightMat);
-    beacon.position.set(0, 3.0, -1.6);
+    beacon.position.set(0, 3.0, -1.5);
     stationGroup.add(beacon);
 
     this.serverSpot = new THREE.PointLight(0x10b981, 2.0, 8);
-    this.serverSpot.position.set(0, 3.0, -1.6);
+    this.serverSpot.position.set(0, 3.0, -1.5);
     stationGroup.add(this.serverSpot);
 
     this.serverBooth = stationGroup;
     this.scene.add(this.serverBooth);
 
-    // Entrance Portal Arch (Arrival Zone on -X)
+    // 1. Entrance Portal Arch (Arrival Zone on -X)
     const entranceArchGroup = new THREE.Group();
     entranceArchGroup.position.copy(this.SPAWN_POS);
 
@@ -301,7 +385,6 @@ class QueueSimulation3D {
     entranceArch.position.y = 1.6;
     entranceArchGroup.add(entranceArch);
 
-    // Entrance Signboard
     const signGeo = new THREE.BoxGeometry(1.8, 0.35, 0.06);
     const signMat = new THREE.MeshStandardMaterial({ color: 0x0369a1 });
     const sign = new THREE.Mesh(signGeo, signMat);
@@ -310,10 +393,10 @@ class QueueSimulation3D {
 
     this.scene.add(entranceArchGroup);
 
-    // 90-Degree Side Departure Portal Arch (Located at side exit corridor on +Z)
+    // 2. Fixed Exit Portal Arch (At the end of the dedicated 90-degree exit corridor)
     const exitArchGroup = new THREE.Group();
-    exitArchGroup.position.copy(this.EXIT_POS);
-    exitArchGroup.rotation.y = Math.PI / 2; // Facing the incoming corridor
+    exitArchGroup.position.copy(this.FINAL_EXIT_POS);
+    exitArchGroup.rotation.y = Math.PI / 2; // Facing the incoming exit corridor
 
     const exitArchMesh = new THREE.Mesh(archGeo, new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.3 }));
     exitArchMesh.rotation.z = Math.PI;
@@ -328,29 +411,38 @@ class QueueSimulation3D {
   }
 
   setupQueueLane() {
-    // 1. Queue Floor Runner (Soft blue-tinted modern track)
-    const runnerGeo = new THREE.PlaneGeometry(14, 1.6);
+    // 1. Arrival Floor Runner
+    const runnerGeo = new THREE.PlaneGeometry(14.5, 1.6);
     const runnerMat = new THREE.MeshStandardMaterial({
       color: 0xf1f5f9,
       roughness: 0.8
     });
     const runner = new THREE.Mesh(runnerGeo, runnerMat);
     runner.rotation.x = -Math.PI / 2;
-    runner.position.set(-6, 0.012, 0);
+    runner.position.set(-6.5, 0.012, 0);
     runner.receiveShadow = true;
     this.scene.add(runner);
 
-    // 2. 90-Degree Exit Floor Runner (Heading toward +Z)
-    const exitRunnerGeo = new THREE.PlaneGeometry(1.6, 9.5);
+    // 2. Fixed Exit Corridor Floor Runner (L-shaped path visual guide)
+    // First turn connector segment: from (0.6, 2.0) to (2.8, 2.0)
+    const turnSegmentGeo = new THREE.PlaneGeometry(2.8, 1.6);
+    const turnSegment = new THREE.Mesh(turnSegmentGeo, runnerMat);
+    turnSegment.rotation.x = -Math.PI / 2;
+    turnSegment.position.set(1.7, 0.012, 2.0);
+    turnSegment.receiveShadow = true;
+    this.scene.add(turnSegment);
+
+    // Side exit corridor runner segment: along Z = 2.0 to 10.5 at X = 2.8
+    const exitRunnerGeo = new THREE.PlaneGeometry(1.8, 9.5);
     const exitRunner = new THREE.Mesh(exitRunnerGeo, runnerMat);
     exitRunner.rotation.x = -Math.PI / 2;
-    exitRunner.position.set(0.4, 0.012, 4.8);
+    exitRunner.position.set(2.8, 0.012, 6.2);
     exitRunner.receiveShadow = true;
     this.scene.add(exitRunner);
 
-    // 3. Stanchions / Floor slot rings for queue positions
+    // 3. Stanchion floor slot rings for queue positions
     for (let i = 0; i < 9; i++) {
-      const slotX = -1.2 - (i * this.SLOT_SPACING);
+      const slotX = -1.0 - (i * this.SLOT_SPACING);
       const ringGeo = new THREE.RingGeometry(0.38, 0.46, 24);
       const ringMat = new THREE.MeshBasicMaterial({
         color: 0x3b82f6,
@@ -365,24 +457,36 @@ class QueueSimulation3D {
       this.queueLaneMarkers.push(ring);
     }
 
-    // Directional Arrow on the floor indicating the 90-degree turn
-    const arrowShape = new THREE.Shape();
-    arrowShape.moveTo(0, 0);
-    arrowShape.lineTo(0.5, 0.8);
-    arrowShape.lineTo(0.2, 0.8);
-    arrowShape.lineTo(0.2, 1.4);
-    arrowShape.lineTo(-0.2, 1.4);
-    arrowShape.lineTo(-0.2, 0.8);
-    arrowShape.lineTo(-0.5, 0.8);
-    arrowShape.closePath();
+    // 4. Directional Floor Decal Arrows along the Fixed Pathway
+    const createFloorArrow = (x, z, angleRad) => {
+      const arrowShape = new THREE.Shape();
+      arrowShape.moveTo(0, 0);
+      arrowShape.lineTo(0.35, 0.6);
+      arrowShape.lineTo(0.15, 0.6);
+      arrowShape.lineTo(0.15, 1.1);
+      arrowShape.lineTo(-0.15, 1.1);
+      arrowShape.lineTo(-0.15, 0.6);
+      arrowShape.lineTo(-0.35, 0.6);
+      arrowShape.closePath();
 
-    const arrowGeo = new THREE.ShapeGeometry(arrowShape);
-    const arrowMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.5 });
-    const arrowMesh = new THREE.Mesh(arrowGeo, arrowMat);
-    arrowMesh.rotation.x = -Math.PI / 2;
-    arrowMesh.rotation.z = Math.PI; // Pointing towards +Z
-    arrowMesh.position.set(0.4, 0.019, 1.8);
-    this.scene.add(arrowMesh);
+      const arrowGeo = new THREE.ShapeGeometry(arrowShape);
+      const arrowMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.55 });
+      const arrowMesh = new THREE.Mesh(arrowGeo, arrowMat);
+      arrowMesh.rotation.x = -Math.PI / 2;
+      arrowMesh.rotation.z = angleRad;
+      arrowMesh.position.set(x, 0.019, z);
+      this.scene.add(arrowMesh);
+    };
+
+    // Queue arrival arrows
+    createFloorArrow(-9.0, 0, -Math.PI / 2); // Pointing +X
+    createFloorArrow(-4.5, 0, -Math.PI / 2); // Pointing +X
+
+    // Fixed Exit Path Guidance Arrows
+    createFloorArrow(0.6, 1.0, Math.PI);      // Step 1: Pointing +Z away from desk
+    createFloorArrow(1.7, 2.0, -Math.PI / 2); // Step 2: Pointing +X into side lane
+    createFloorArrow(2.8, 4.0, Math.PI);      // Step 3: Pointing +Z down exit corridor
+    createFloorArrow(2.8, 7.5, Math.PI);      // Step 4: Pointing +Z towards exit gate
   }
 
   // Exponential random variate
@@ -397,17 +501,17 @@ class QueueSimulation3D {
   }
 
   /**
-   * Build a procedural 3D Humanoid walking figure
+   * Build a procedural 3D Humanoid walking figure with Waypoint Navigation
    */
   createCustomerMesh(id) {
     const group = new THREE.Group();
     const style = this.clothingPalettes[(id - 1) % this.clothingPalettes.length];
 
-    // Root offset
+    // Spawn at entrance
     group.position.copy(this.SPAWN_POS);
-    group.rotation.y = Math.PI / 2; // Facing +X direction initially
+    group.rotation.y = Math.PI / 2; // Facing +X initially
 
-    // 1. Torso Group
+    // 1. Torso & Head Group
     const torsoGroup = new THREE.Group();
     torsoGroup.position.y = 0.82; // Pelvis height
 
@@ -511,7 +615,8 @@ class QueueSimulation3D {
 
     this.scene.add(group);
 
-    return {
+    // Customer Navigation State
+    const customer = {
       id: id,
       mesh: group,
       torsoGroup: torsoGroup,
@@ -519,17 +624,28 @@ class QueueSimulation3D {
       rightLegPivot: rightLegPivot,
       leftArmPivot: leftArmPivot,
       rightArmPivot: rightArmPivot,
-      targetPos: this.SPAWN_POS.clone(),
       currentPos: this.SPAWN_POS.clone(),
+      targetPos: this.SPAWN_POS.clone(),
+      waypoints: [], // Fixed Path waypoint queue
       walkPhase: Math.random() * Math.PI,
       isMoving: false,
       inService: false,
       isExiting: false,
-      targetAngle: Math.PI / 2, // 90 deg facing +X initially
+      targetAngle: Math.PI / 2, // Facing +X initially
       arrivalTime: this.simTime,
       serviceStartTime: 0,
-      completionTime: 0
+      completionTime: 0,
+
+      // Method to assign a fixed path of waypoints
+      setPath: function(points) {
+        this.waypoints = points.map(p => p.clone());
+        if (this.waypoints.length > 0) {
+          this.targetPos = this.waypoints.shift();
+        }
+      }
     };
+
+    return customer;
   }
 
   updateParameters(newLambda, newMu) {
@@ -609,10 +725,10 @@ class QueueSimulation3D {
         this.startService(cust);
       } else {
         this.queue.push(cust);
+        this.recalculateQueuePositions();
       }
 
       this.scheduleNextArrival();
-      this.recalculateQueuePositions();
       this.updateHUD();
     }
 
@@ -621,7 +737,7 @@ class QueueSimulation3D {
       this.completeService();
     }
 
-    // Update humanoid positions, strides, and 90-degree turning
+    // Update humanoid positions, strides, and waypoint transitions
     this.updateCustomerPositions(dt);
 
     // Update Server Visuals
@@ -654,9 +770,12 @@ class QueueSimulation3D {
     const serviceDuration = this.randomExp(this.mu);
     this.serviceCompletionTime = this.simTime + serviceDuration;
 
-    // Customer walks directly to the service counter spot facing the clerk
-    customer.targetPos = this.SERVICE_POS.clone();
+    // Customer walks along the queue line directly to the service counter spot
     customer.targetAngle = Math.PI / 2; // Face +X towards desk
+    customer.setPath([
+      new THREE.Vector3(-1.0, 0, 0),
+      this.SERVICE_POS.clone()
+    ]);
   }
 
   completeService() {
@@ -667,17 +786,18 @@ class QueueSimulation3D {
     departing.inService = false;
     departing.completionTime = this.simTime;
 
-    // 90-Degree Turn to the side!
-    // Instead of continuing forward along +X, turn 90° towards +Z corridor!
-    departing.targetPos = this.EXIT_POS.clone();
-    departing.targetAngle = 0; // Face +Z (90-degree turn from +X)
+    // CRITICAL: Customer ALWAYS traverses the FIXED PATH waypoints!
+    // Never walks straight to the exit!
+    // Path: Counter -> Step out (0.6, 2.0) -> Turn 90° to side lane (2.8, 2.0)
+    // -> Turn 90° into corridor (2.8, 6.0) -> Arch (2.8, 9.5) -> Exit out (2.8, 11.5)
+    departing.setPath(this.FIXED_EXIT_WAYPOINTS);
 
     this.completedCount++;
     this.activeCustomer = null;
     this.serverBusy = false;
     this.serviceCompletionTime = Infinity;
 
-    // Dispatch next customer in queue
+    // Dispatch next customer from FIFO queue
     if (this.queue.length > 0) {
       const nextCustomer = this.queue.shift();
       this.startService(nextCustomer);
@@ -690,17 +810,22 @@ class QueueSimulation3D {
   recalculateQueuePositions() {
     for (let i = 0; i < this.queue.length; i++) {
       const cust = this.queue[i];
-      const slotX = -1.2 - (i * this.SLOT_SPACING);
-      cust.targetPos = new THREE.Vector3(slotX, 0, 0);
+      const slotX = -1.0 - (i * this.SLOT_SPACING);
       cust.targetAngle = Math.PI / 2; // Face forward in line
+
+      // Only re-route if not already targeting this slot
+      if (Math.abs(cust.targetPos.x - slotX) > 0.05) {
+        cust.setPath([ new THREE.Vector3(slotX, 0, 0) ]);
+      }
     }
   }
 
   /**
-   * Update Humanoid positions, walking stride cycles, and smooth turning
+   * Update Humanoid positions along their FIXED WAYPOINT PATHS,
+   * stride animations, and smooth directional turning.
    */
   updateCustomerPositions(dt) {
-    const moveSpeedFactor = Math.min(1.0, dt * 6.0 * Math.max(1, this.timeScale * 0.8));
+    const moveSpeedFactor = Math.min(1.0, dt * 5.0 * Math.max(1, this.timeScale * 0.8));
 
     for (let i = this.customersInSystem.length - 1; i >= 0; i--) {
       const c = this.customersInSystem[i];
@@ -709,19 +834,22 @@ class QueueSimulation3D {
       const dz = c.targetPos.z - c.currentPos.z;
       const dist = Math.hypot(dx, dz);
 
-      if (dist > 0.05) {
+      if (dist > 0.08) {
         c.isMoving = true;
-        // Interpolate position
+        // Interpolate position along the current waypoint vector
         c.currentPos.x += dx * moveSpeedFactor;
         c.currentPos.z += dz * moveSpeedFactor;
         c.mesh.position.set(c.currentPos.x, 0, c.currentPos.z);
 
-        // Compute movement direction angle (heading)
+        // Smoothly rotate body to face movement direction
         const moveAngle = Math.atan2(dx, dz);
-        c.mesh.rotation.y = moveAngle;
+        let angleDiff = moveAngle - c.mesh.rotation.y;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        c.mesh.rotation.y += angleDiff * 0.25;
 
         // Advance walking animation stride
-        const strideSpeed = Math.max(4.0, 7.0 * this.timeScale);
+        const strideSpeed = Math.max(4.0, 7.5 * this.timeScale);
         c.walkPhase += dt * strideSpeed;
 
         // Swing legs back and forth
@@ -737,29 +865,39 @@ class QueueSimulation3D {
         // Subtle torso bounce while walking
         c.torsoGroup.position.y = 0.82 + Math.abs(Math.sin(c.walkPhase)) * 0.04;
       } else {
-        // Person has arrived at their slot / counter
-        c.isMoving = false;
+        // Person reached current waypoint!
         c.currentPos.copy(c.targetPos);
         c.mesh.position.set(c.targetPos.x, 0, c.targetPos.z);
 
-        // Smoothly rotate to target resting angle (facing counter or facing side exit)
-        const angleDiff = c.targetAngle - c.mesh.rotation.y;
-        c.mesh.rotation.y += angleDiff * 0.15;
+        // Check if there are subsequent waypoints in the fixed path
+        if (c.waypoints.length > 0) {
+          // Advance to the next waypoint seamlessly!
+          c.targetPos = c.waypoints.shift();
+        } else {
+          // Person has arrived at their final destination in the path
+          c.isMoving = false;
 
-        // Ease limbs back to standing idle pose
-        c.leftLegPivot.rotation.x *= 0.8;
-        c.rightLegPivot.rotation.x *= 0.8;
-        c.leftArmPivot.rotation.x *= 0.8;
-        c.rightArmPivot.rotation.x *= 0.8;
+          // Smoothly rotate to resting angle (facing desk or queue forward)
+          let angleDiff = c.targetAngle - c.mesh.rotation.y;
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+          c.mesh.rotation.y += angleDiff * 0.15;
 
-        // Subtle idle breathing
-        c.torsoGroup.position.y = 0.82 + Math.sin(this.simTime * 2.5 + c.id) * 0.01;
-      }
+          // Ease limbs back to standing idle pose
+          c.leftLegPivot.rotation.x *= 0.8;
+          c.rightLegPivot.rotation.x *= 0.8;
+          c.leftArmPivot.rotation.x *= 0.8;
+          c.rightArmPivot.rotation.x *= 0.8;
 
-      // Check if departing customer has reached the 90-degree exit portal
-      if (c.isExiting && c.currentPos.distanceTo(this.EXIT_POS) < 0.6) {
-        this.scene.remove(c.mesh);
-        this.customersInSystem.splice(i, 1);
+          // Subtle idle breathing
+          c.torsoGroup.position.y = 0.82 + Math.sin(this.simTime * 2.5 + c.id) * 0.01;
+
+          // If departing customer has traversed ALL waypoints through the exit arch, despawn
+          if (c.isExiting && c.currentPos.distanceTo(this.FINAL_EXIT_POS) < 2.5) {
+            this.scene.remove(c.mesh);
+            this.customersInSystem.splice(i, 1);
+          }
+        }
       }
     }
   }
@@ -800,14 +938,14 @@ class QueueSimulation3D {
     if (!this.camera || !this.controls) return;
 
     if (viewName === 'isometric') {
-      this.camera.position.set(-2, 14, 20);
-      this.controls.target.set(0, 1.0, 2);
+      this.camera.position.set(-1, 16, 22);
+      this.controls.target.set(0, 1.0, 3.0);
     } else if (viewName === 'top') {
-      this.camera.position.set(0, 25, 2.1);
-      this.controls.target.set(0, 0, 2.0);
+      this.camera.position.set(0, 26, 3.0);
+      this.controls.target.set(0, 0, 3.0);
     } else if (viewName === 'counter') {
-      this.camera.position.set(4.5, 3.2, 5.5);
-      this.controls.target.set(1.2, 1.2, 1.0);
+      this.camera.position.set(5.5, 4.0, 5.0);
+      this.controls.target.set(1.5, 1.2, 1.5);
     }
     this.controls.update();
   }
