@@ -706,7 +706,7 @@ class QueueSimulation3D {
     this.nextArrivalTime = 0;
     this.serviceCompletionTime = Infinity;
 
-    this.setServerVisualState('idle');
+    this.setServerVisualState(this.lambda >= this.mu ? 'overloaded' : 'idle');
     this.scheduleNextArrival();
     this.updateHUD();
   }
@@ -765,7 +765,7 @@ class QueueSimulation3D {
     this.updateCustomerPositions(dt);
 
     // Update Server Visuals
-    if (this.queue.length > 6) {
+    if (this.queue.length > 6 || this.lambda >= this.mu) {
       this.setServerVisualState('overloaded');
     } else if (this.serverBusy) {
       this.setServerVisualState('busy');
@@ -941,7 +941,10 @@ class QueueSimulation3D {
     if (hudCompleted) hudCompleted.textContent = this.completedCount;
 
     if (hudServerState) {
-      if (this.serverBusy) {
+      if (this.lambda >= this.mu) {
+        hudServerState.textContent = 'OVERLOADED';
+        hudServerState.className = 'status-badge error';
+      } else if (this.serverBusy) {
         hudServerState.textContent = 'BUSY';
         hudServerState.className = 'status-badge busy';
       } else {

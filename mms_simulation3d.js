@@ -597,12 +597,13 @@ class QueueSimulationMMS3D {
     this.completedCount = 0;
     this.arrivedCount = 0;
 
+    const isOverloaded = (this.lambda >= this.s * this.mu);
     this.serverStations.forEach(st => {
       st.busy = false;
       st.activeCustomer = null;
       st.serviceCompletionTime = Infinity;
       st.servedCount = 0;
-      this.setServerBeacon(st, 'idle');
+      this.setServerBeacon(st, isOverloaded ? 'overloaded' : 'idle');
     });
 
     this.scheduleNextArrival();
@@ -677,7 +678,7 @@ class QueueSimulationMMS3D {
       } else if (st.busy) {
         this.setServerBeacon(st, 'busy');
       } else {
-        this.setServerBeacon(st, 'idle');
+        this.setServerBeacon(st, isOverloaded ? 'overloaded' : 'idle');
       }
 
       // Clerk idle or typing movement
@@ -838,7 +839,10 @@ class QueueSimulationMMS3D {
     if (hudBusyServers) hudBusyServers.textContent = `${busyCount}/${this.s}`;
 
     if (hudServerState) {
-      if (busyCount === this.s) {
+      if (this.lambda >= this.s * this.mu) {
+        hudServerState.textContent = 'OVERLOADED';
+        hudServerState.className = 'status-badge error';
+      } else if (busyCount === this.s) {
         hudServerState.textContent = 'ALL BUSY';
         hudServerState.className = 'status-badge busy';
       } else if (busyCount > 0) {

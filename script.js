@@ -390,6 +390,10 @@ function calculateQueue() {
 
   if (!state.isValid) {
     clearMetricsDisplay(metrics.error);
+    if (window.sim3D) {
+      window.sim3D.resetSimulation();
+      window.sim3D.setServerVisualState('overloaded');
+    }
     return;
   }
 
@@ -398,6 +402,7 @@ function calculateQueue() {
     updateChartsUnstable(metrics.rho);
     if (window.sim3D) {
       window.sim3D.updateParameters(metrics.lambda, metrics.mu);
+      window.sim3D.resetSimulation();
       window.sim3D.setServerVisualState('overloaded');
     }
     return;
@@ -406,9 +411,10 @@ function calculateQueue() {
   renderMetrics(metrics);
   updateCharts(metrics);
 
-  // Synchronize 3D simulation parameters
+  // Synchronize 3D simulation parameters and auto-reset simulation on value changes
   if (window.sim3D) {
     window.sim3D.updateParameters(metrics.lambda, metrics.mu);
+    window.sim3D.resetSimulation();
   }
 }
 

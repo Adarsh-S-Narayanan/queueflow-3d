@@ -483,9 +483,32 @@ function calculateMMSQueue() {
   renderLittlesLawMatrix();
   updateCharts();
 
-  if (window.simMMS3D && mmsState.isValid) {
-    window.simMMS3D.updateParameters(lam, mu, s);
+  // Automatically synchronize parameters and reset 3D simulation on value change
+  if (window.simMMS3D) {
+    if (mmsState.isValid) {
+      window.simMMS3D.updateParameters(lam, mu, s);
+    }
+    window.simMMS3D.resetSimulation();
   }
+
+  // Also reset 2D simulation loop, booth states, and counters in sync
+  mmsState.sim.customerCounter = 0;
+  mmsState.sim.queue = [];
+  mmsState.sim.completedCount = 0;
+  mmsState.sim.simTimeSeconds = 0;
+  mmsState.sim.timeToNextArrival = sampleExponential(mmsState.lambda > 0 ? mmsState.lambda : 1);
+
+  mmsState.sim.servers.forEach(srv => {
+    srv.busy = false;
+    srv.customer = null;
+    srv.progress = 0;
+    srv.serviceDuration = 0;
+    srv.servedCount = 0;
+  });
+
+  renderServerBoothsHTML();
+  renderQueueTrackHTML();
+  updateSimulationHUD();
 }
 
 /**
