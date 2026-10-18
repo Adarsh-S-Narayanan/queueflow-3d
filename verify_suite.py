@@ -15,31 +15,15 @@ import importlib.util
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Dynamic module loading from isolated engine directory
-engine_paths = [
-    os.path.join(os.path.dirname(__file__), "engin", "Model I：(M／M／1)：(∞／FIFO)", "mm1_engine.py"),
-    os.path.join(os.path.dirname(__file__), "engine", "Model I：(M／M／1)：(∞／FIFO)", "mm1_engine.py"),
-    os.path.join(os.path.dirname(__file__), "engin", "Model_I_(M_M_1)_(inf_FIFO)", "mm1_engine.py"),
-    os.path.join(os.path.dirname(__file__), "engine", "Model_I_(M_M_1)_(inf_FIFO)", "mm1_engine.py"),
-]
+engine_path = os.path.join(os.path.dirname(__file__), "engin", "Model I：(M／M／1)：(∞／FIFO)", "mm1_engine.py")
 
-engine_mod = None
-loaded_path = ""
-for ep in engine_paths:
-    if os.path.exists(ep):
-        try:
-            spec = importlib.util.spec_from_file_location("mm1_engine", ep)
-            mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)
-            engine_mod = mod
-            loaded_path = ep
-            break
-        except Exception as e:
-            continue
+if not os.path.exists(engine_path):
+    raise FileNotFoundError(f"Isolated engine not found at: {engine_path}")
 
-if not engine_mod:
-    raise ImportError(f"Could not load isolated engine from any candidate path: {engine_paths}")
-
-print(f"Successfully loaded isolated engine from: {loaded_path}")
+spec = importlib.util.spec_from_file_location("mm1_engine", engine_path)
+engine_mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(engine_mod)
+print(f"Successfully loaded isolated engine from: {engine_path}")
 
 # Load test cases from JSON
 json_path = os.path.join(os.path.dirname(__file__), 'test_cases.json')

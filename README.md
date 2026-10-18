@@ -22,7 +22,7 @@ Based on the **Linear Algebra & Queuing Theory — Study Notes (Page 6)**.
 
 2. **Isolated Mathematical Engine Architecture**:
    - As requested, all mathematical equations, probability distributions, stability checks, and Little's formulas are completely isolated into a dedicated folder:
-     `engin/Model I: (M/M/1) : (∞/FIFO)/` (with cross-platform safe aliases `engine/` and Unicode / ASCII paths)
+     `engin/Model I: (M/M/1) : (∞/FIFO)/`
    - Contains:
      - `mm1_engine.js`: Pure mathematical engine (UMD module, browser global `window.MM1Engine`, Node.js / ES module compatible)
      - `mm1_engine.py`: Pure Python 3 mathematical engine with typing and verification methods
