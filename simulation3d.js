@@ -457,36 +457,60 @@ class QueueSimulation3D {
       this.queueLaneMarkers.push(ring);
     }
 
-    // 4. Directional Floor Decal Arrows along the Fixed Pathway
-    const createFloorArrow = (x, z, angleRad) => {
-      const arrowShape = new THREE.Shape();
-      arrowShape.moveTo(0, 0);
-      arrowShape.lineTo(0.35, 0.6);
-      arrowShape.lineTo(0.15, 0.6);
-      arrowShape.lineTo(0.15, 1.1);
-      arrowShape.lineTo(-0.15, 1.1);
-      arrowShape.lineTo(-0.15, 0.6);
-      arrowShape.lineTo(-0.35, 0.6);
-      arrowShape.closePath();
+    // 4. Directional Floor Decal Arrows (Mathematically aligned with movement vectors)
+    const createFloorArrow = (cx, cz, dirX, dirZ, color = 0x0284c7) => {
+      const len = Math.hypot(dirX, dirZ) || 1;
+      const ux = dirX / len; // Forward unit vector
+      const uz = dirZ / len;
+      const vx = -uz;        // Lateral unit vector perpendicular to forward
+      const vz = ux;
 
-      const arrowGeo = new THREE.ShapeGeometry(arrowShape);
-      const arrowMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.55 });
-      const arrowMesh = new THREE.Mesh(arrowGeo, arrowMat);
-      arrowMesh.rotation.x = -Math.PI / 2;
-      arrowMesh.rotation.z = angleRad;
-      arrowMesh.position.set(x, 0.019, z);
+      // 7 key polygon coordinates on floor plane (Y = 0.019)
+      const tip   = [cx + 0.50 * ux,               0.019, cz + 0.50 * uz];
+      const rBarb = [cx + 0.08 * ux + 0.30 * vx,   0.019, cz + 0.08 * uz + 0.30 * vz];
+      const lBarb = [cx + 0.08 * ux - 0.30 * vx,   0.019, cz + 0.08 * uz - 0.30 * vz];
+      const rNeck = [cx + 0.08 * ux + 0.12 * vx,   0.019, cz + 0.08 * uz + 0.12 * vz];
+      const lNeck = [cx + 0.08 * ux - 0.12 * vx,   0.019, cz + 0.08 * uz - 0.12 * vz];
+      const rTail = [cx - 0.42 * ux + 0.12 * vx,   0.019, cz - 0.42 * uz + 0.12 * vz];
+      const lTail = [cx - 0.42 * ux - 0.12 * vx,   0.019, cz - 0.42 * uz - 0.12 * vz];
+
+      // Triangulated 2D arrow lying flat on floor
+      const positions = new Float32Array([
+        // Head triangle
+        ...tip, ...rBarb, ...lBarb,
+        // Stem quad triangle 1
+        ...rNeck, ...rTail, ...lTail,
+        // Stem quad triangle 2
+        ...rNeck, ...lTail, ...lNeck
+      ]);
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.computeVertexNormals();
+
+      const mat = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.75,
+        side: THREE.DoubleSide
+      });
+      const arrowMesh = new THREE.Mesh(geo, mat);
       this.scene.add(arrowMesh);
     };
 
-    // Queue arrival arrows
-    createFloorArrow(-9.0, 0, -Math.PI / 2); // Pointing +X
-    createFloorArrow(-4.5, 0, -Math.PI / 2); // Pointing +X
+    // Queue arrival arrows (Flow: left to right towards desk -> dirX = 1, dirZ = 0)
+    createFloorArrow(-9.0, 0, 1, 0, 0x2563eb);
+    createFloorArrow(-4.5, 0, 1, 0, 0x2563eb);
+    createFloorArrow(-1.5, 0, 1, 0, 0x2563eb);
 
     // Fixed Exit Path Guidance Arrows
-    createFloorArrow(0.6, 1.0, Math.PI);      // Step 1: Pointing +Z away from desk
-    createFloorArrow(1.7, 2.0, -Math.PI / 2); // Step 2: Pointing +X into side lane
-    createFloorArrow(2.8, 4.0, Math.PI);      // Step 3: Pointing +Z down exit corridor
-    createFloorArrow(2.8, 7.5, Math.PI);      // Step 4: Pointing +Z towards exit gate
+    // Step 1: Step away from counter window -> dirX = 0, dirZ = 1 (towards +Z)
+    createFloorArrow(0.6, 1.1, 0, 1, 0x059669);
+    // Step 2: Turn right into side corridor -> dirX = 1, dirZ = 0 (towards +X)
+    createFloorArrow(1.7, 2.0, 1, 0, 0x059669);
+    // Step 3 & 4: March down exit corridor towards exit arch -> dirX = 0, dirZ = 1 (towards +Z)
+    createFloorArrow(2.8, 4.2, 0, 1, 0x059669);
+    createFloorArrow(2.8, 7.5, 0, 1, 0x059669);
   }
 
   // Exponential random variate
