@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   initServerBooths();
   initCharts();
   initEventListeners();
+
+  // Initialize 3D Multi-Server Simulation
+  if (window.QueueSimulationMMS3D) {
+    window.simMMS3D = new QueueSimulationMMS3D('canvas-3d-container');
+  }
+
   calculateMMSQueue();
   renderTestCasesTable();
   initFormulasKaTeX();
@@ -275,6 +281,18 @@ function initEventListeners() {
     });
   }
 
+  // Camera View Switcher Buttons
+  document.querySelectorAll('.btn-sim-view').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-sim-view').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const view = btn.getAttribute('data-view');
+      if (window.simMMS3D) {
+        window.simMMS3D.setCameraView(view);
+      }
+    });
+  });
+
   // Simulation Controls
   const btnPlayPause = document.getElementById('btn-sim-playpause');
   if (btnPlayPause) {
@@ -464,6 +482,10 @@ function calculateMMSQueue() {
   renderMetricsDisplay();
   renderLittlesLawMatrix();
   updateCharts();
+
+  if (window.simMMS3D && mmsState.isValid) {
+    window.simMMS3D.updateParameters(lam, mu, s);
+  }
 }
 
 /**
@@ -1332,10 +1354,18 @@ function startSimulationLoop() {
 }
 
 function toggleSimulation() {
-  mmsState.sim.isRunning = !mmsState.sim.isRunning;
+  let isRunning;
+  if (window.simMMS3D) {
+    isRunning = window.simMMS3D.togglePlayPause();
+    mmsState.sim.isRunning = isRunning;
+  } else {
+    mmsState.sim.isRunning = !mmsState.sim.isRunning;
+    isRunning = mmsState.sim.isRunning;
+  }
+
   const btn = document.getElementById('btn-sim-playpause');
   if (btn) {
-    btn.innerHTML = mmsState.sim.isRunning
+    btn.innerHTML = isRunning
       ? `<i data-lucide="pause"></i> <span>Pause</span>`
       : `<i data-lucide="play"></i> <span>Resume</span>`;
     initLucideIcons();
@@ -1343,6 +1373,10 @@ function toggleSimulation() {
 }
 
 function resetSimulation() {
+  if (window.simMMS3D) {
+    window.simMMS3D.resetSimulation();
+  }
+
   mmsState.sim.customerCounter = 0;
   mmsState.sim.queue = [];
   mmsState.sim.completedCount = 0;
@@ -1364,6 +1398,10 @@ function resetSimulation() {
 
 function setSimSpeed(spd) {
   mmsState.sim.speed = spd;
+  if (window.simMMS3D) {
+    window.simMMS3D.setTimeScale(spd);
+  }
+
   const badge = document.getElementById('sim-speed-badge');
   if (badge) badge.textContent = `${spd.toFixed(1)}x`;
 

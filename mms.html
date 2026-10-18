@@ -200,47 +200,31 @@
           </div>
         </div>
 
-        <!-- Right Column: Multi-Server Visual Stage -->
+        <!-- Right Column: Interactive 3D Multi-Server Stage (Three.js) -->
         <div class="glass-card" id="simulation-section">
           <div class="card-header-bar">
             <h3 class="card-title">
-              <i data-lucide="cpu"></i> Parallel Server Pool Stage
+              <i data-lucide="box"></i> 3D Multi-Server Environment
             </h3>
-            <span class="metric-formula-tag">Discrete-Event Dispatcher</span>
+            <div class="sim-btn-group">
+              <button class="btn btn-sm btn-sim-view active" data-view="isometric">Isometric</button>
+              <button class="btn btn-sm btn-sim-view" data-view="top">Top-Down</button>
+              <button class="btn btn-sm btn-sim-view" data-view="counter">Counters</button>
+            </div>
           </div>
 
-          <div class="mms-stage-wrapper">
+          <div class="canvas-3d-wrap">
+            <div id="canvas-3d-container"></div>
 
-            <!-- Waiting Queue Ribbon -->
-            <div class="queue-lane-wrapper">
-              <div class="queue-lane-header">
-                <span class="queue-lane-title">
-                  <i data-lucide="users"></i> Single Shared Waiting Queue (FIFO)
-                </span>
-                <span style="font-size: 0.72rem; color: var(--text-dim);">Head of line dispatches to first idle server</span>
-              </div>
-              <div id="queue-lane-track" class="queue-lane-track">
-                <span class="queue-lane-empty"><i data-lucide="check"></i> Queue is currently empty. No waiting customers.</span>
-              </div>
-            </div>
-
-            <!-- Parallel Server Booths Grid -->
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
-                  Parallel Service Counters (<span id="hud-busy-servers">0/2</span> Busy)
-                </span>
-              </div>
-              <div id="servers-grid-container" class="servers-grid">
-                <!-- Dynamically generated server booth cards -->
-              </div>
-            </div>
-
-            <!-- Heads-Up Display (HUD) Panel -->
-            <div class="canvas-hud" style="position: relative; margin-top: 0.25rem;">
-              <div class="hud-panel" style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;">
+            <!-- Heads-Up Display (HUD) -->
+            <div class="canvas-hud">
+              <div class="hud-panel">
                 <div class="hud-stat">
-                  <span class="hud-label">In Waiting Queue (Lq)</span>
+                  <span class="hud-label">Server Pool</span>
+                  <span id="hud-server-state" class="status-badge idle">ALL IDLE</span>
+                </div>
+                <div class="hud-stat">
+                  <span class="hud-label">In Queue (Lq)</span>
                   <span id="hud-queue-count" class="hud-val">0</span>
                 </div>
                 <div class="hud-stat">
@@ -248,51 +232,63 @@
                   <span id="hud-system-count" class="hud-val">0</span>
                 </div>
                 <div class="hud-stat">
-                  <span class="hud-label">Total Completed</span>
+                  <span class="hud-label">Completed</span>
                   <span id="hud-completed-count" class="hud-val">0</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Simulation Controls Bar -->
-            <div class="sim-controls-bar">
-              <div class="sim-controls-actions">
-                <button id="btn-sim-playpause" class="btn btn-primary btn-sm">
-                  <i data-lucide="pause"></i> <span>Pause</span>
-                </button>
-                <button id="btn-sim-reset" class="btn btn-secondary btn-sm" title="Clear customer entities and reset simulation clock">
-                  <i data-lucide="rotate-ccw"></i> <span>Reset</span>
-                </button>
-              </div>
+          <!-- Simulation Controls Bar -->
+          <div class="sim-controls-bar">
+            <div class="sim-controls-actions">
+              <button id="btn-sim-playpause" class="btn btn-primary btn-sm">
+                <i data-lucide="pause"></i> <span>Pause</span>
+              </button>
+              <button id="btn-sim-reset" class="btn btn-secondary btn-sm" title="Clear customer entities and reset simulation clock">
+                <i data-lucide="rotate-ccw"></i> <span>Reset</span>
+              </button>
+            </div>
 
-              <!-- Time Accelerator Controls -->
-              <div class="time-accelerator-container">
-                <div class="time-accelerator-header">
-                  <div class="time-accelerator-label">
-                    <i data-lucide="gauge"></i>
-                    <span>Time Accelerator</span>
-                  </div>
-                  <div class="time-accelerator-badges">
-                    <span id="sim-speed-badge" class="badge-speed-val">1.0x (Real-Time)</span>
-                    <div class="sim-time-clock">
-                      <i data-lucide="clock"></i>
-                      <span id="hud-sim-time">00:00.0</span>
-                    </div>
+            <!-- Real-Time Time Accelerator Bar -->
+            <div class="time-accelerator-container">
+              <div class="time-accelerator-header">
+                <div class="time-accelerator-label">
+                  <i data-lucide="gauge"></i>
+                  <span>Time Accelerator</span>
+                </div>
+                <div class="time-accelerator-badges">
+                  <span id="sim-speed-badge" class="badge-speed-val">1.0x (Real-Time)</span>
+                  <div class="sim-time-clock">
+                    <i data-lucide="clock"></i>
+                    <span id="hud-sim-time">00:00.0</span>
                   </div>
                 </div>
-                <div class="time-slider-row">
-                  <input type="range" id="sim-time-accelerator" min="0.1" max="10.0" step="0.1" value="1.0" class="time-slider" aria-label="Simulation Time Speed Accelerator">
-                  <div class="time-slider-presets">
-                    <button type="button" class="btn-preset-speed" data-speed="0.5">0.5x</button>
-                    <button type="button" class="btn-preset-speed active" data-speed="1.0">1.0x (RT)</button>
-                    <button type="button" class="btn-preset-speed" data-speed="2.0">2.0x</button>
-                    <button type="button" class="btn-preset-speed" data-speed="5.0">5.0x</button>
-                  </div>
+              </div>
+              <div class="time-slider-row">
+                <input type="range" id="sim-time-accelerator" min="0.1" max="10.0" step="0.1" value="1.0" class="time-slider" aria-label="Simulation Time Speed Accelerator">
+                <div class="time-slider-presets">
+                  <button type="button" class="btn-preset-speed" data-speed="0.5">0.5x</button>
+                  <button type="button" class="btn-preset-speed active" data-speed="1.0">1.0x (RT)</button>
+                  <button type="button" class="btn-preset-speed" data-speed="2.0">2.0x</button>
+                  <button type="button" class="btn-preset-speed" data-speed="5.0">5.0x</button>
                 </div>
               </div>
             </div>
-
           </div>
+
+          <!-- Live Parallel Counter Telemetry Below 3D Stage -->
+          <div style="margin-top: 1rem; border-top: 1px solid var(--card-border); padding-top: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
+                Parallel Service Counter Telemetry (<span id="hud-busy-servers">0/2</span> Busy)
+              </span>
+            </div>
+            <div id="servers-grid-container" class="servers-grid">
+              <!-- Dynamically generated server booth cards -->
+            </div>
+          </div>
+        </div>
         </div>
 
       </div>
@@ -698,9 +694,15 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
   <!-- Isolated Mathematical Engine: Model II: (M/M/s):(ꝏ/FIFO) -->
   <script src="Engine/(M／M／s)：(ꝏ／FIFO)/mms_engine.js"></script>
+
+  <!-- 3D WebGL Multi-Server Simulation -->
+  <script src="mms_simulation3d.js"></script>
 
   <!-- Application Logic -->
   <script src="mms_script.js"></script>

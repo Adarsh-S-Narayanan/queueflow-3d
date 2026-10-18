@@ -204,30 +204,30 @@ This repository is structured to deploy on GitHub Pages without any extra build 
 
 ```
 maths_assingment1/
-├── Engine/                                      # Multi-Server Mathematical Engine Directory
+├── Engine/                                      # Unified Mathematical Engine Directory
+│   ├── Model I：(M／M／1)：(∞／FIFO)/             # Folder isolating Model I math equations
+│   │   ├── mm1_engine.js                        # Pure JavaScript calculation module (UMD/ES6)
+│   │   ├── mm1_engine.py                        # Pure Python 3 mathematical calculation module
+│   │   ├── test_engine.py                       # Self-contained Python unit tests
+│   │   ├── README.md                            # Mathematical derivation & engine documentation
+│   │   └── __init__.py                          # Python package marker
 │   └── (M／M／s)：(ꝏ／FIFO)/                     # Folder isolating (M/M/s):(ꝏ/FIFO) equations
 │       ├── mms_engine.js                        # Pure JavaScript calculation module (UMD/window.MMsEngine)
 │       ├── mms_engine.py                        # Pure Python 3 mathematical calculation module
 │       ├── test_mms_engine.py                   # Self-contained Python unit tests
 │       ├── README.md                            # Mathematical derivation & Erlang C documentation
 │       └── __init__.py                          # Python package marker
-├── engin/                                       # Single-Server Engine Directory & Canonical Mirrors
-│   ├── Model I：(M／M／1)：(∞／FIFO)/             # Folder isolating Model I math equations
-│   │   ├── mm1_engine.js                        # Pure JavaScript calculation module (UMD/ES6)
-│   │   ├── mm1_engine.py                        # Pure Python 3 mathematical calculation module
-│   │   ├── test_engine.py                       # Self-contained Python unit tests
-│   │   └── README.md                            # Mathematical derivation & engine documentation
-│   └── (M／M／s)：(ꝏ／FIFO)/                     # Mirrored engine files for universal path compatibility
 ├── .github/
 │   └── workflows/
 │       └── verify.yml                           # GitHub Actions CI verifying both test suites
 ├── .nojekyll                                    # Prevents Jekyll from ignoring special directories
 ├── index.html                                   # Single-Server (M/M/1) 3D Calculator & Simulator
-├── mms.html                                     # Multi-Server (M/M/s) Parallel Pool Calculator & Stage
+├── mms.html                                     # Multi-Server (M/M/s) 3D Calculator & Stage
 ├── style.css                                    # Modern glassmorphism, responsive styles, 3D HUD & booth grid
 ├── script.js                                    # UI event handlers, Chart.js & M/M/1 integration
-├── mms_script.js                                # UI event handlers, Chart.js & M/M/s simulation engine
+├── mms_script.js                                # UI event handlers, Chart.js & M/M/s integration
 ├── simulation3d.js                              # Three.js 3D discrete-event queue simulator (M/M/1)
+├── mms_simulation3d.js                          # Three.js 3D parallel multi-server queue simulator (M/M/s)
 ├── test_cases.json                              # Verified M/M/1 test cases
 ├── mms_test_cases.json                          # Verified M/M/s test cases (normal, boundary, overloaded, invalid)
 ├── verify_suite.py                              # Python test runner verifying M/M/1 against test_cases.json
