@@ -150,10 +150,12 @@ function initEventListeners() {
     });
   }
 
-  // 3D Controls buttons
+  // 3D Controls buttons & Time Accelerator
   const btnPlayPause = document.getElementById('btn-sim-playpause');
   const btnReset = document.getElementById('btn-sim-reset');
-  const speedButtons = document.querySelectorAll('.btn-sim-speed');
+  const timeSlider = document.getElementById('sim-time-accelerator');
+  const speedBadge = document.getElementById('sim-speed-badge');
+  const presetSpeedButtons = document.querySelectorAll('.btn-preset-speed');
   const viewButtons = document.querySelectorAll('.btn-sim-view');
 
   if (btnPlayPause) {
@@ -176,12 +178,29 @@ function initEventListeners() {
     });
   }
 
-  speedButtons.forEach(btn => {
+  function applySimulationSpeed(speed) {
+    if (window.sim3D) window.sim3D.setTimeScale(speed);
+    if (timeSlider) timeSlider.value = speed;
+    if (speedBadge) {
+      speedBadge.textContent = Math.abs(speed - 1.0) < 0.05 ? '1.0x (Real-Time)' : `${speed.toFixed(1)}x`;
+    }
+    presetSpeedButtons.forEach(btn => {
+      const btnSpeed = parseFloat(btn.getAttribute('data-speed'));
+      btn.classList.toggle('active', Math.abs(btnSpeed - speed) < 0.05);
+    });
+  }
+
+  if (timeSlider) {
+    timeSlider.addEventListener('input', (e) => {
+      const speed = parseFloat(e.target.value) || 1.0;
+      applySimulationSpeed(speed);
+    });
+  }
+
+  presetSpeedButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      speedButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
       const speed = parseFloat(btn.getAttribute('data-speed')) || 1.0;
-      if (window.sim3D) window.sim3D.setTimeScale(speed);
+      applySimulationSpeed(speed);
     });
   });
 
@@ -635,51 +654,6 @@ function renderMetrics(m) {
   if (pTqVal) pTqVal.textContent = probTqGtT.toFixed(4);
   if (pTqPercent) pTqPercent.textContent = `(${(probTqGtT * 100).toFixed(2)}%)`;
 
-  // Little's Law 4-Matrix Grid Verification
-  const l1Lhs = document.getElementById('littles-law1-lhs');
-  const l1Rhs = document.getElementById('littles-law1-rhs');
-  const badge1 = document.getElementById('badge-law1');
-  if (l1Lhs) l1Lhs.textContent = Ls.toFixed(4);
-  if (l1Rhs) l1Rhs.textContent = (state.lambda * Ws).toFixed(4);
-  if (badge1) badge1.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
-
-  const l2Lhs = document.getElementById('littles-law2-lhs');
-  const l2Rhs = document.getElementById('littles-law2-rhs');
-  const badge2 = document.getElementById('badge-law2');
-  if (l2Lhs) l2Lhs.textContent = Lq.toFixed(4);
-  if (l2Rhs) l2Rhs.textContent = (state.lambda * Wq).toFixed(4);
-  if (badge2) badge2.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
-
-  const l3Lhs = document.getElementById('littles-law3-lhs');
-  const l3Rhs = document.getElementById('littles-law3-rhs');
-  const badge3 = document.getElementById('badge-law3');
-  if (l3Lhs) l3Lhs.textContent = Ws.toFixed(4);
-  if (l3Rhs) l3Rhs.textContent = (Wq + 1 / state.mu).toFixed(4);
-  if (badge3) badge3.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
-
-  const l4Lhs = document.getElementById('littles-law4-lhs');
-  const l4Rhs = document.getElementById('littles-law4-rhs');
-  const badge4 = document.getElementById('badge-law4');
-  if (l4Lhs) l4Lhs.textContent = Ls.toFixed(4);
-  if (l4Rhs) l4Rhs.textContent = (Lq + rho).toFixed(4);
-  if (badge4) badge4.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
-
-  // Update Interactive System Illustration SVG numbers
-  const svgLam = document.getElementById('svg-val-lambda');
-  const svgMu = document.getElementById('svg-val-mu');
-  const svgRho = document.getElementById('svg-val-rho');
-  const svgP0 = document.getElementById('svg-val-p0');
-  const svgLq = document.getElementById('svg-val-lq');
-  const svgWq = document.getElementById('svg-val-wq');
-  const svgLs = document.getElementById('svg-val-ls');
-  if (svgLam) svgLam.textContent = state.lambda.toFixed(2);
-  if (svgMu) svgMu.textContent = state.mu.toFixed(2);
-  if (svgRho) svgRho.textContent = `${(rho * 100).toFixed(0)}%`;
-  if (svgP0) svgP0.textContent = `${(p0 * 100).toFixed(0)}%`;
-  if (svgLq) svgLq.textContent = Lq.toFixed(2);
-  if (svgWq) svgWq.textContent = Wq.toFixed(2);
-  if (svgLs) svgLs.textContent = Ls.toFixed(2);
-
   // Secondary metrics
   const avgServiceEl = document.getElementById('metric-service-time');
   const avgArrivalEl = document.getElementById('metric-arrival-time');
@@ -810,32 +784,10 @@ function clearMetricsDisplay(errMsg) {
   const littleLq = document.getElementById('check-littles-lq');
   if (littleL) littleL.innerHTML = `<span class="badge-error">Invalid Input</span>`;
   if (littleLq) littleLq.innerHTML = `<span class="badge-error">Invalid Input</span>`;
-
-  // Little's 4 badges
-  ['badge-law1', 'badge-law2', 'badge-law3', 'badge-law4'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = `<span class="badge-error">Awaiting Input</span>`;
-  });
-
-  // SVG Illustration
-  const svgLam = document.getElementById('svg-val-lambda');
-  const svgMu = document.getElementById('svg-val-mu');
-  const svgRho = document.getElementById('svg-val-rho');
-  const svgP0 = document.getElementById('svg-val-p0');
-  const svgLq = document.getElementById('svg-val-lq');
-  const svgWq = document.getElementById('svg-val-wq');
-  const svgLs = document.getElementById('svg-val-ls');
-  if (svgLam) svgLam.textContent = '—';
-  if (svgMu) svgMu.textContent = '—';
-  if (svgRho) svgRho.textContent = '—';
-  if (svgP0) svgP0.textContent = '—';
-  if (svgLq) svgLq.textContent = '—';
-  if (svgWq) svgWq.textContent = '—';
-  if (svgLs) svgLs.textContent = '—';
 }
 
 /**
- * Initialize Chart.js Graphs
+ * Initialize Chart.js Graphs with Light Theme Colors
  */
 function initCharts() {
   const distCtx = document.getElementById('chart-distribution');
@@ -849,8 +801,8 @@ function initCharts() {
         datasets: [{
           label: 'Probability P(N = n)',
           data: [],
-          backgroundColor: 'rgba(56, 189, 248, 0.65)',
-          borderColor: 'rgba(56, 189, 248, 1)',
+          backgroundColor: 'rgba(37, 99, 235, 0.75)',
+          borderColor: 'rgba(37, 99, 235, 1)',
           borderWidth: 1.5,
           borderRadius: 6
         }]
@@ -868,14 +820,14 @@ function initCharts() {
         },
         scales: {
           x: {
-            title: { display: true, text: 'Number of Customers in System (n)', color: '#94a3b8' },
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#cbd5e1' }
+            title: { display: true, text: 'Number of Customers in System (n)', color: '#475569', font: { weight: '600' } },
+            grid: { color: 'rgba(15, 23, 42, 0.05)' },
+            ticks: { color: '#64748b' }
           },
           y: {
-            title: { display: true, text: 'Probability Pn', color: '#94a3b8' },
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#cbd5e1' },
+            title: { display: true, text: 'Probability Pn', color: '#475569', font: { weight: '600' } },
+            grid: { color: 'rgba(15, 23, 42, 0.05)' },
+            ticks: { color: '#64748b' },
             beginAtZero: true
           }
         }
@@ -892,21 +844,21 @@ function initCharts() {
           {
             label: 'Avg in System (L)',
             data: [],
-            borderColor: '#38bdf8',
-            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.08)',
             fill: true,
             tension: 0.35,
-            borderWidth: 2,
+            borderWidth: 2.5,
             pointRadius: 0
           },
           {
             label: 'Avg in Queue (Lq)',
             data: [],
-            borderColor: '#a855f7',
-            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+            borderColor: '#7c3aed',
+            backgroundColor: 'rgba(124, 58, 237, 0.08)',
             fill: true,
             tension: 0.35,
-            borderWidth: 2,
+            borderWidth: 2.5,
             pointRadius: 0
           }
         ]
@@ -916,7 +868,7 @@ function initCharts() {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            labels: { color: '#e2e8f0' }
+            labels: { color: '#0f172a', font: { weight: '600' } }
           },
           tooltip: {
             callbacks: {
@@ -926,14 +878,14 @@ function initCharts() {
         },
         scales: {
           x: {
-            title: { display: true, text: 'Traffic Intensity ρ (λ/μ)', color: '#94a3b8' },
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#cbd5e1' }
+            title: { display: true, text: 'Traffic Intensity ρ (λ/μ)', color: '#475569', font: { weight: '600' } },
+            grid: { color: 'rgba(15, 23, 42, 0.05)' },
+            ticks: { color: '#64748b' }
           },
           y: {
-            title: { display: true, text: 'Average Customer Count', color: '#94a3b8' },
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#cbd5e1' },
+            title: { display: true, text: 'Average Customer Count', color: '#475569', font: { weight: '600' } },
+            grid: { color: 'rgba(15, 23, 42, 0.05)' },
+            ticks: { color: '#64748b' },
             beginAtZero: true,
             max: 20
           }

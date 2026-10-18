@@ -67,90 +67,6 @@
         </p>
       </div>
 
-      <!-- Isolated Engine Architecture Callout Banner -->
-      <div class="engine-architecture-banner">
-        <div class="engine-banner-content">
-          <div class="engine-banner-icon">
-            <i data-lucide="cpu"></i>
-          </div>
-          <div class="engine-banner-info">
-            <h4><i data-lucide="folder-check"></i> Isolated Mathematical Engine Architecture</h4>
-            <p>
-              Mathematical formulas, stability criteria, and tail distributions are strictly isolated into the dedicated folder:
-            </p>
-          </div>
-        </div>
-        <div class="engine-banner-path-pill">
-          <i data-lucide="terminal"></i> engin/Model I: (M/M/1) : (∞/FIFO)/
-        </div>
-      </div>
-
-      <!-- Interactive System Architecture Illustration -->
-      <div class="glass-card illustration-card">
-        <div class="card-header-bar">
-          <h3 class="card-title">
-            <i data-lucide="git-branch"></i> System Topology & Stochastic Queue Flow
-          </h3>
-          <span class="metric-formula-tag">Poisson Arrival & FIFO Queue Model</span>
-        </div>
-        <div class="illustration-svg-wrap">
-          <svg class="illustration-svg" viewBox="0 0 920 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- 1. Arrival Stream -->
-            <g class="svg-node-box">
-              <rect x="20" y="45" width="160" height="90" rx="10" fill="#0c1222" stroke="#38bdf8" stroke-width="1.5"/>
-              <text x="100" y="75" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif">POISSON ARRIVALS</text>
-              <text x="100" y="102" fill="#38bdf8" font-size="16" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">λ = <tspan id="svg-val-lambda">2.00</tspan></text>
-              <text x="100" y="122" fill="#64748b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">Exp(λ) Inter-arrivals</text>
-            </g>
-
-            <!-- Flow Arrow 1 -->
-            <path class="svg-flow-path" d="M 180 90 L 260 90" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
-            <polygon points="265,90 255,85 255,95" fill="#38bdf8"/>
-
-            <!-- 2. Waiting Buffer (Queue) -->
-            <g class="svg-node-box">
-              <rect x="270" y="35" width="280" height="110" rx="12" fill="#0f172a" stroke="#818cf8" stroke-width="1.5"/>
-              <text x="410" y="60" fill="#cbd5e1" font-size="12" font-weight="700" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif">FIFO WAITING BUFFER (Capacity: ∞)</text>
-              
-              <!-- Buffer Slots Visualization -->
-              <rect x="290" y="75" width="35" height="50" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-              <rect x="335" y="75" width="35" height="50" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-              <rect x="380" y="75" width="35" height="50" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-              <rect x="425" y="75" width="35" height="50" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-              <rect x="470" y="75" width="35" height="50" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-              <text x="522" y="105" fill="#818cf8" font-size="14" font-weight="700" text-anchor="middle">···</text>
-
-              <!-- Queue Labels -->
-              <text x="350" y="137" fill="#94a3b8" font-size="10" font-family="'JetBrains Mono', monospace">Avg. Queue: <tspan id="svg-val-lq" fill="#38bdf8" font-weight="700">0.50</tspan></text>
-              <text x="470" y="137" fill="#94a3b8" font-size="10" font-family="'JetBrains Mono', monospace">Wait: <tspan id="svg-val-wq" fill="#38bdf8" font-weight="700">0.25</tspan></text>
-            </g>
-
-            <!-- Flow Arrow 2 -->
-            <path class="svg-flow-path" d="M 550 90 L 610 90" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"/>
-            <polygon points="615,90 605,85 605,95" fill="#818cf8"/>
-
-            <!-- 3. Single Server Unit -->
-            <g class="svg-node-box">
-              <rect x="620" y="45" width="150" height="90" rx="10" fill="#0c1222" stroke="#34d399" stroke-width="1.5"/>
-              <text x="695" y="72" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif">SINGLE SERVER (c=1)</text>
-              <text x="695" y="98" fill="#34d399" font-size="16" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">μ = <tspan id="svg-val-mu">4.00</tspan></text>
-              <text x="695" y="120" fill="#64748b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">Util: <tspan id="svg-val-rho" fill="#34d399" font-weight="700">50%</tspan> | P₀: <tspan id="svg-val-p0" fill="#34d399">50%</tspan></text>
-            </g>
-
-            <!-- Flow Arrow 3 -->
-            <path class="svg-flow-path" d="M 770 90 L 830 90" stroke="#34d399" stroke-width="2.5" stroke-linecap="round"/>
-            <polygon points="835,90 825,85 825,95" fill="#34d399"/>
-
-            <!-- 4. Departures -->
-            <g class="svg-node-box">
-              <circle cx="870" cy="90" r="35" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.5"/>
-              <text x="870" y="85" fill="#94a3b8" font-size="9" font-weight="600" text-anchor="middle">DEPARTED</text>
-              <text x="870" y="102" fill="#fff" font-size="11" font-weight="700" text-anchor="middle" font-family="'JetBrains Mono', monospace">L=<tspan id="svg-val-ls">1.0</tspan></text>
-            </g>
-          </svg>
-        </div>
-      </div>
-
       <!-- Main Interactive Dashboard Grid -->
       <div class="dashboard-grid">
         
@@ -282,21 +198,39 @@
 
           <!-- Simulation Controls Bar -->
           <div class="sim-controls-bar">
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <div class="sim-controls-actions">
               <button id="btn-sim-playpause" class="btn btn-primary btn-sm">
                 <i data-lucide="pause"></i> <span>Pause</span>
               </button>
               <button id="btn-sim-reset" class="btn btn-secondary btn-sm" title="Clear customer entities and reset simulation clock">
-                <i data-lucide="rotate-ccw"></i> Reset 3D
+                <i data-lucide="rotate-ccw"></i> <span>Reset</span>
               </button>
             </div>
 
-            <div style="display: flex; gap: 0.4rem; align-items: center;">
-              <span style="font-size: 0.75rem; color: var(--text-dim); margin-right: 0.25rem;">Speed:</span>
-              <button class="btn btn-sm btn-secondary btn-sim-speed" data-speed="0.5">0.5x</button>
-              <button class="btn btn-sm btn-secondary btn-sim-speed active" data-speed="1.0">1x</button>
-              <button class="btn btn-sm btn-secondary btn-sim-speed" data-speed="2.0">2x</button>
-              <button class="btn btn-sm btn-secondary btn-sim-speed" data-speed="4.0">4x</button>
+            <!-- Real-Time Time Accelerator Bar -->
+            <div class="time-accelerator-container">
+              <div class="time-accelerator-header">
+                <div class="time-accelerator-label">
+                  <i data-lucide="gauge"></i>
+                  <span>Time Accelerator</span>
+                </div>
+                <div class="time-accelerator-badges">
+                  <span id="sim-speed-badge" class="badge-speed-val">1.0x (Real-Time)</span>
+                  <div class="sim-time-clock">
+                    <i data-lucide="clock"></i>
+                    <span id="hud-sim-time">00:00.0</span>
+                  </div>
+                </div>
+              </div>
+              <div class="time-slider-row">
+                <input type="range" id="sim-time-accelerator" min="0.1" max="10.0" step="0.1" value="1.0" class="time-slider" aria-label="Simulation Time Speed Accelerator">
+                <div class="time-slider-presets">
+                  <button type="button" class="btn-preset-speed" data-speed="0.5">0.5x</button>
+                  <button type="button" class="btn-preset-speed active" data-speed="1.0">1.0x (RT)</button>
+                  <button type="button" class="btn-preset-speed" data-speed="2.0">2.0x</button>
+                  <button type="button" class="btn-preset-speed" data-speed="5.0">5.0x</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -518,73 +452,6 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- Little's Formulas 4-Law Verification Matrix Card -->
-    <div class="glass-card">
-      <div class="card-header-bar">
-        <h4 class="card-title">
-          <i data-lucide="check-check"></i> Little's Formulas & Conservation Laws Matrix
-        </h4>
-        <span class="badge-verified"><i data-lucide="shield-check"></i> 4 of 4 Laws Verified</span>
-      </div>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-        Real-time verification of all four fundamental relations from Study Notes (Page 6):
-      </p>
-
-      <div class="littles-matrix-grid">
-        <!-- Law 1 -->
-        <div class="littles-matrix-card">
-          <div class="littles-matrix-title">Little's Law 1 (System)</div>
-          <div class="littles-matrix-formula">Lₛ = &lambda; &middot; Wₛ</div>
-          <div class="littles-matrix-values">
-            <span>LHS: <strong id="littles-law1-lhs">1.0000</strong></span>
-            <span>RHS: <strong id="littles-law1-rhs">1.0000</strong></span>
-          </div>
-          <div class="littles-matrix-badge" id="badge-law1">
-            <i data-lucide="check"></i> Verified (Exact)
-          </div>
-        </div>
-
-        <!-- Law 2 -->
-        <div class="littles-matrix-card">
-          <div class="littles-matrix-title">Little's Law 2 (Queue)</div>
-          <div class="littles-matrix-formula">Lq = &lambda; &middot; Wq</div>
-          <div class="littles-matrix-values">
-            <span>LHS: <strong id="littles-law2-lhs">0.5000</strong></span>
-            <span>RHS: <strong id="littles-law2-rhs">0.5000</strong></span>
-          </div>
-          <div class="littles-matrix-badge" id="badge-law2">
-            <i data-lucide="check"></i> Verified (Exact)
-          </div>
-        </div>
-
-        <!-- Law 3 -->
-        <div class="littles-matrix-card">
-          <div class="littles-matrix-title">Additive Residence Law</div>
-          <div class="littles-matrix-formula">Wₛ = Wq + 1/&mu;</div>
-          <div class="littles-matrix-values">
-            <span>LHS: <strong id="littles-law3-lhs">0.5000</strong></span>
-            <span>RHS: <strong id="littles-law3-rhs">0.5000</strong></span>
-          </div>
-          <div class="littles-matrix-badge" id="badge-law3">
-            <i data-lucide="check"></i> Verified (Exact)
-          </div>
-        </div>
-
-        <!-- Law 4 -->
-        <div class="littles-matrix-card">
-          <div class="littles-matrix-title">Customer Conservation</div>
-          <div class="littles-matrix-formula">Lₛ = Lq + &lambda;/&mu;</div>
-          <div class="littles-matrix-values">
-            <span>LHS: <strong id="littles-law4-lhs">1.0000</strong></span>
-            <span>RHS: <strong id="littles-law4-rhs">1.0000</strong></span>
-          </div>
-          <div class="littles-matrix-badge" id="badge-law4">
-            <i data-lucide="check"></i> Verified (Exact)
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
