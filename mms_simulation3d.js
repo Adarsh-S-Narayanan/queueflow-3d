@@ -384,6 +384,8 @@ class QueueSimulationMMS3D {
         id: i + 1,
         busy: false,
         activeCustomer: null,
+        serviceStartTime: 0,
+        serviceDuration: 1,
         serviceCompletionTime: Infinity,
         deskGroup: stationGroup,
         clerkAvatar: clerkGroup,
@@ -398,6 +400,7 @@ class QueueSimulationMMS3D {
 
     // Set exit portal location according to current server pool width
     this.updateExitPortal();
+    this.renderServerBoothsUI();
   }
 
   updateExitPortal() {
@@ -601,12 +604,15 @@ class QueueSimulationMMS3D {
     this.serverStations.forEach(st => {
       st.busy = false;
       st.activeCustomer = null;
+      st.serviceStartTime = 0;
+      st.serviceDuration = 1;
       st.serviceCompletionTime = Infinity;
       st.servedCount = 0;
       this.setServerBeacon(st, isOverloaded ? 'overloaded' : 'idle');
     });
 
     this.scheduleNextArrival();
+    this.renderServerBoothsUI();
     this.updateHUD();
   }
 
@@ -701,6 +707,8 @@ class QueueSimulationMMS3D {
     customer.assignedServer = station;
 
     const serviceDuration = this.randomExp(this.mu);
+    station.serviceDuration = serviceDuration;
+    station.serviceStartTime = this.simTime;
     station.serviceCompletionTime = this.simTime + serviceDuration;
 
     // Route customer along waypoints to this server's specific counter
@@ -853,6 +861,93 @@ class QueueSimulationMMS3D {
         hudServerState.className = 'status-badge idle';
       }
     }
+
+    this.updateServerBoothsUI();
+  }
+
+  renderServerBoothsUI() {
+    const container = document.getElementById('servers-grid-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    this.serverStations.forEach(st => {
+      const card = document.createElement('div');
+      card.id = `server-booth-${st.id}`;
+      card.className = `server-booth-card ${st.busy ? 'busy' : 'idle'}`;
+      card.innerHTML = `
+        <div class="server-booth-top">
+          <span class="server-booth-title">
+            <i data-lucide="monitor"></i> Server #${st.id}
+          </span>
+          <span class="server-status-pill ${st.busy ? 'busy' : 'idle'}">
+            ${st.busy ? 'BUSY' : 'IDLE'}
+          </span>
+        </div>
+        <div class="server-customer-slot">
+          <i data-lucide="user"></i>
+          <span class="customer-label">${st.busy && st.activeCustomer ? 'C-' + st.activeCustomer.id : 'No Customer'}</span>
+        </div>
+        <div class="server-progress-bar">
+          <div class="server-progress-fill" style="width: 0%;"></div>
+        </div>
+        <div class="server-booth-footer">
+          <span>Handled: <strong>${st.servedCount || 0}</strong></span>
+          <span>Rate: <strong>${this.mu.toFixed(1)}/hr</strong></span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  }
+
+  updateServerBoothsUI() {
+    this.serverStations.forEach(st => {
+      const card = document.getElementById(`server-booth-${st.id}`);
+      if (!card) return;
+
+      const isBusy = st.busy && st.activeCustomer;
+      const desiredClass = `server-booth-card ${isBusy ? 'busy' : 'idle'}`;
+      if (card.className !== desiredClass) {
+        card.className = desiredClass;
+      }
+
+      const pill = card.querySelector('.server-status-pill');
+      if (pill) {
+        const text = isBusy ? 'BUSY' : 'IDLE';
+        if (pill.textContent.trim() !== text) {
+          pill.textContent = text;
+          pill.className = `server-status-pill ${isBusy ? 'busy' : 'idle'}`;
+        }
+      }
+
+      const label = card.querySelector('.customer-label');
+      if (label) {
+        const custText = isBusy ? `C-${st.activeCustomer.id}` : 'No Customer';
+        if (label.textContent !== custText) {
+          label.textContent = custText;
+        }
+      }
+
+      const fill = card.querySelector('.server-progress-fill');
+      if (fill) {
+        let pct = 0;
+        if (isBusy && st.serviceDuration > 0) {
+          pct = Math.min(100, Math.max(0, ((this.simTime - st.serviceStartTime) / st.serviceDuration) * 100));
+        }
+        fill.style.width = `${pct.toFixed(1)}%`;
+      }
+
+      const countEl = card.querySelector('.server-booth-footer strong');
+      if (countEl) {
+        const countText = String(st.servedCount || 0);
+        if (countEl.textContent !== countText) {
+          countEl.textContent = countText;
+        }
+      }
+    });
   }
 
   setCameraView(viewName) {
@@ -888,6 +983,7 @@ class QueueSimulationMMS3D {
     this.lastTimestamp = now;
 
     this.stepSimulation(dt);
+    this.updateHUD();
 
     const hudClock = document.getElementById('hud-sim-time');
     if (hudClock) {

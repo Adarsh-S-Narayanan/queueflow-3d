@@ -22,26 +22,13 @@ const mmsState = {
     scaling: null,
     sensitivity: null
   },
-  testCases: [],
-  // Multi-server simulation engine
-  sim: {
-    isRunning: true,
-    speed: 1.0,
-    simTimeSeconds: 0,
-    timerId: null,
-    customerCounter: 0,
-    queue: [], // array of waiting customers: [{ id, queueTime }]
-    servers: [], // array of server states: [{ id, busy, customer, progress, serviceDuration, servedCount }]
-    completedCount: 0,
-    timeToNextArrival: 0
-  }
+  testCases: []
 };
 
 // DOM Ready Entrypoint
 document.addEventListener('DOMContentLoaded', async () => {
   initLucideIcons();
   await loadTestCases();
-  initServerBooths();
   initCharts();
   initEventListeners();
 
@@ -53,7 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   calculateMMSQueue();
   renderTestCasesTable();
   initFormulasKaTeX();
-  startSimulationLoop();
 });
 
 function initLucideIcons() {
@@ -235,7 +221,6 @@ function initEventListeners() {
         updateQuickServerPills(val);
       }
       mmsState.s = val;
-      initServerBooths();
       calculateMMSQueue();
     });
 
@@ -245,7 +230,6 @@ function initEventListeners() {
       sInput.value = val;
       updateQuickServerPills(val);
       mmsState.s = val;
-      initServerBooths();
       calculateMMSQueue();
     });
   }
@@ -259,7 +243,6 @@ function initEventListeners() {
         if (sSlider) sSlider.value = sVal;
         updateQuickServerPills(sVal);
         mmsState.s = sVal;
-        initServerBooths();
         calculateMMSQueue();
       }
     });
@@ -396,65 +379,7 @@ function applyPreset(presetKey) {
 
   updateQuickServerPills(p.s);
   updateUnitLabels();
-  initServerBooths();
   calculateMMSQueue();
-}
-
-/**
- * Initialize Multi-Server Booths
- */
-function initServerBooths() {
-  const s = Math.max(1, mmsState.s || 1);
-  mmsState.sim.servers = [];
-
-  for (let i = 1; i <= s; i++) {
-    mmsState.sim.servers.push({
-      id: i,
-      busy: false,
-      customer: null,
-      progress: 0,
-      serviceDuration: 0,
-      servedCount: 0
-    });
-  }
-
-  renderServerBoothsHTML();
-}
-
-function renderServerBoothsHTML() {
-  const container = document.getElementById('servers-grid-container');
-  if (!container) return;
-
-  container.innerHTML = '';
-  mmsState.sim.servers.forEach(srv => {
-    const card = document.createElement('div');
-    card.id = `server-booth-${srv.id}`;
-    card.className = `server-booth-card ${srv.busy ? 'busy' : 'idle'}`;
-    card.innerHTML = `
-      <div class="server-booth-top">
-        <span class="server-booth-title">
-          <i data-lucide="monitor"></i> Server #${srv.id}
-        </span>
-        <span class="server-status-pill ${srv.busy ? 'busy' : 'idle'}">
-          ${srv.busy ? 'BUSY' : 'IDLE'}
-        </span>
-      </div>
-      <div class="server-customer-slot">
-        <i data-lucide="user"></i>
-        <span class="customer-label">${srv.busy ? srv.customer.id : 'No Customer'}</span>
-      </div>
-      <div class="server-progress-bar">
-        <div class="server-progress-fill" style="width: ${srv.progress}%;"></div>
-      </div>
-      <div class="server-booth-footer">
-        <span>Handled: <strong>${srv.servedCount}</strong></span>
-        <span>Rate: <strong>${mmsState.mu}/hr</strong></span>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-
-  initLucideIcons();
 }
 
 /**
@@ -490,25 +415,6 @@ function calculateMMSQueue() {
     }
     window.simMMS3D.resetSimulation();
   }
-
-  // Also reset 2D simulation loop, booth states, and counters in sync
-  mmsState.sim.customerCounter = 0;
-  mmsState.sim.queue = [];
-  mmsState.sim.completedCount = 0;
-  mmsState.sim.simTimeSeconds = 0;
-  mmsState.sim.timeToNextArrival = sampleExponential(mmsState.lambda > 0 ? mmsState.lambda : 1);
-
-  mmsState.sim.servers.forEach(srv => {
-    srv.busy = false;
-    srv.customer = null;
-    srv.progress = 0;
-    srv.serviceDuration = 0;
-    srv.servedCount = 0;
-  });
-
-  renderServerBoothsHTML();
-  renderQueueTrackHTML();
-  updateSimulationHUD();
 }
 
 /**
@@ -1223,7 +1129,6 @@ window.loadTestCaseToInputs = function (testId) {
   if (presetSel) presetSel.value = 'custom';
 
   updateQuickServerPills(tc.s);
-  initServerBooths();
   calculateMMSQueue();
 
   // Scroll to calculator
@@ -1349,49 +1254,18 @@ LITTLE'S LAW VERIFICATION:
 }
 
 /**
- * =============================================================
- * Discrete-Event Multi-Server Simulation Engine
- * =============================================================
+ * 3D Simulation Controls & Synchronization
  */
-
-function sampleExponential(rate) {
-  if (rate <= 0) return Infinity;
-  return -Math.log(1.0 - Math.random()) / rate;
-}
-
-function startSimulationLoop() {
-  mmsState.sim.timeToNextArrival = sampleExponential(mmsState.lambda);
-
-  const tickRateMs = 100; // 10 updates per second
-  mmsState.sim.timerId = setInterval(() => {
-    if (!mmsState.sim.isRunning) return;
-
-    // Time delta in simulation hours
-    // Base: 1 real second = 0.05 simulation hours * speed
-    const dtHours = (tickRateMs / 1000) * 0.05 * mmsState.sim.speed;
-    mmsState.sim.simTimeSeconds += (tickRateMs / 1000) * mmsState.sim.speed;
-
-    updateSimulationStep(dtHours);
-    updateSimulationHUD();
-  }, tickRateMs);
-}
-
 function toggleSimulation() {
-  let isRunning;
   if (window.simMMS3D) {
-    isRunning = window.simMMS3D.togglePlayPause();
-    mmsState.sim.isRunning = isRunning;
-  } else {
-    mmsState.sim.isRunning = !mmsState.sim.isRunning;
-    isRunning = mmsState.sim.isRunning;
-  }
-
-  const btn = document.getElementById('btn-sim-playpause');
-  if (btn) {
-    btn.innerHTML = isRunning
-      ? `<i data-lucide="pause"></i> <span>Pause</span>`
-      : `<i data-lucide="play"></i> <span>Resume</span>`;
-    initLucideIcons();
+    const isRunning = window.simMMS3D.togglePlayPause();
+    const btn = document.getElementById('btn-sim-playpause');
+    if (btn) {
+      btn.innerHTML = isRunning
+        ? `<i data-lucide="pause"></i> <span>Pause</span>`
+        : `<i data-lucide="play"></i> <span>Resume</span>`;
+      initLucideIcons();
+    }
   }
 }
 
@@ -1399,186 +1273,18 @@ function resetSimulation() {
   if (window.simMMS3D) {
     window.simMMS3D.resetSimulation();
   }
-
-  mmsState.sim.customerCounter = 0;
-  mmsState.sim.queue = [];
-  mmsState.sim.completedCount = 0;
-  mmsState.sim.simTimeSeconds = 0;
-  mmsState.sim.timeToNextArrival = sampleExponential(mmsState.lambda);
-
-  mmsState.sim.servers.forEach(srv => {
-    srv.busy = false;
-    srv.customer = null;
-    srv.progress = 0;
-    srv.serviceDuration = 0;
-    srv.servedCount = 0;
-  });
-
-  renderServerBoothsHTML();
-  renderQueueTrackHTML();
-  updateSimulationHUD();
 }
 
 function setSimSpeed(spd) {
-  mmsState.sim.speed = spd;
   if (window.simMMS3D) {
     window.simMMS3D.setTimeScale(spd);
   }
 
   const badge = document.getElementById('sim-speed-badge');
-  if (badge) badge.textContent = `${spd.toFixed(1)}x`;
+  if (badge) badge.textContent = Math.abs(spd - 1.0) < 0.05 ? '1.0x (Real-Time)' : `${spd.toFixed(1)}x`;
 
   document.querySelectorAll('.btn-preset-speed').forEach(b => {
     const bSpd = parseFloat(b.getAttribute('data-speed'));
     b.classList.toggle('active', Math.abs(bSpd - spd) < 0.05);
   });
-}
-
-function updateSimulationStep(dt) {
-  // 1. Process Arrivals
-  mmsState.sim.timeToNextArrival -= dt;
-  if (mmsState.sim.timeToNextArrival <= 0) {
-    mmsState.sim.customerCounter++;
-    const newCust = {
-      id: `C-${mmsState.sim.customerCounter}`,
-      arrivalTime: mmsState.sim.simTimeSeconds
-    };
-
-    // Check if any server is idle
-    const freeServer = mmsState.sim.servers.find(s => !s.busy);
-    if (freeServer && mmsState.sim.queue.length === 0) {
-      assignCustomerToServer(freeServer, newCust);
-    } else {
-      // Put in FIFO queue
-      mmsState.sim.queue.push(newCust);
-      // Limit queue UI rendering to max 100 to avoid DOM lag
-      if (mmsState.sim.queue.length > 200) {
-        mmsState.sim.queue.splice(200);
-      }
-    }
-
-    mmsState.sim.timeToNextArrival = sampleExponential(mmsState.lambda);
-    renderQueueTrackHTML();
-  }
-
-  // 2. Process Service in Parallel Server Booths
-  mmsState.sim.servers.forEach(srv => {
-    if (srv.busy) {
-      srv.progress += (dt / srv.serviceDuration) * 100;
-      if (srv.progress >= 100) {
-        // Departure
-        srv.busy = false;
-        srv.customer = null;
-        srv.progress = 0;
-        srv.servedCount++;
-        mmsState.sim.completedCount++;
-
-        // If customers waiting in queue, dispatch first customer
-        if (mmsState.sim.queue.length > 0) {
-          const nextCust = mmsState.sim.queue.shift();
-          assignCustomerToServer(srv, nextCust);
-          renderQueueTrackHTML();
-        } else {
-          updateServerBoothUI(srv);
-        }
-      } else {
-        updateServerProgressUI(srv);
-      }
-    } else {
-      // Check if queue has waiting customers
-      if (mmsState.sim.queue.length > 0) {
-        const nextCust = mmsState.sim.queue.shift();
-        assignCustomerToServer(srv, nextCust);
-        renderQueueTrackHTML();
-      }
-    }
-  });
-}
-
-function assignCustomerToServer(srv, cust) {
-  srv.busy = true;
-  srv.customer = cust;
-  srv.progress = 0;
-  srv.serviceDuration = sampleExponential(mmsState.mu);
-  updateServerBoothUI(srv);
-}
-
-function updateServerBoothUI(srv) {
-  const card = document.getElementById(`server-booth-${srv.id}`);
-  if (!card) return;
-
-  card.className = `server-booth-card ${srv.busy ? 'busy' : 'idle'}`;
-  const pill = card.querySelector('.server-status-pill');
-  if (pill) {
-    pill.className = `server-status-pill ${srv.busy ? 'busy' : 'idle'}`;
-    pill.textContent = srv.busy ? 'BUSY' : 'IDLE';
-  }
-
-  const label = card.querySelector('.customer-label');
-  if (label) {
-    label.textContent = srv.busy ? srv.customer.id : 'No Customer';
-  }
-
-  const fill = card.querySelector('.server-progress-fill');
-  if (fill) fill.style.width = `${srv.progress}%`;
-
-  const footerCount = card.querySelector('.server-booth-footer strong');
-  if (footerCount) footerCount.textContent = srv.servedCount;
-}
-
-function updateServerProgressUI(srv) {
-  const card = document.getElementById(`server-booth-${srv.id}`);
-  if (!card) return;
-  const fill = card.querySelector('.server-progress-fill');
-  if (fill) fill.style.width = `${Math.min(100, srv.progress)}%`;
-}
-
-function renderQueueTrackHTML() {
-  const track = document.getElementById('queue-lane-track');
-  if (!track) return;
-
-  const count = mmsState.sim.queue.length;
-  if (count === 0) {
-    track.innerHTML = `<span class="queue-lane-empty"><i data-lucide="check"></i> Queue is currently empty. No waiting customers.</span>`;
-  } else {
-    // Show first 15 customers + ellipsis if more
-    const showList = mmsState.sim.queue.slice(0, 15);
-    let html = showList.map(c => `
-      <div class="queue-person-chip">
-        <span class="dot"></span>
-        <span>${c.id}</span>
-      </div>
-    `).join('');
-
-    if (count > 15) {
-      html += `<div class="queue-person-chip" style="background: var(--bg-tertiary); color: var(--text-dim);">+${count - 15} more</div>`;
-    }
-    track.innerHTML = html;
-  }
-
-  initLucideIcons();
-}
-
-function updateSimulationHUD() {
-  const busyCount = mmsState.sim.servers.filter(s => s.busy).length;
-  const qCount = mmsState.sim.queue.length;
-  const sysCount = busyCount + qCount;
-
-  const setEl = (id, txt) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = txt;
-  };
-
-  setEl('hud-busy-servers', `${busyCount}/${mmsState.s}`);
-  setEl('hud-queue-count', qCount);
-  setEl('hud-system-count', sysCount);
-  setEl('hud-completed-count', mmsState.sim.completedCount);
-
-  // Simulation Clock format MM:SS.S
-  const totalSec = Math.floor(mmsState.sim.simTimeSeconds);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  const tenths = Math.floor((mmsState.sim.simTimeSeconds % 1) * 10);
-  const clockText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${tenths}`;
-  setEl('hud-sim-time', clockText);
 }
