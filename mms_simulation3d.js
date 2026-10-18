@@ -43,10 +43,11 @@ class QueueSimulationMMS3D {
     this.platformGroup = null;
     this.exitPortalArch = null;
     this.entrancePortalArch = null;
+    this.laneMarkersGroup = null;
 
     // Coordinates configuration
     this.SPAWN_POS = new THREE.Vector3(-14, 0, 0);
-    this.DISPATCH_POS = new THREE.Vector3(-1.0, 0, 0);
+    this.DISPATCH_POS = new THREE.Vector3(-1.25, 0, 0);
     this.SLOT_SPACING = 1.4;
     this.SERVER_X = 3.2;
     this.SERVICE_X = 1.6;
@@ -107,11 +108,11 @@ class QueueSimulationMMS3D {
     // 6. Environment & Floor Platform
     this.setupEnvironment();
 
-    // 7. Parallel Server Stations (Build for initial s)
-    this.rebuildServerStations(this.s);
-
-    // 8. Queue Lane Markers & Portals
+    // 7. Queue Lane Architecture & Portals
     this.setupPortalsAndLanes();
+
+    // 8. Parallel Server Stations & Dynamic Floor Corridors
+    this.rebuildServerStations(this.s);
 
     // Resize listener
     window.addEventListener('resize', () => this.onWindowResize());
@@ -171,9 +172,14 @@ class QueueSimulationMMS3D {
   }
 
   setupPortalsAndLanes() {
+    // Dynamic lanes and floor markings group
+    this.laneMarkersGroup = new THREE.Group();
+    this.scene.add(this.laneMarkersGroup);
+
     // Entrance Portal Arch (at X = -14, Z = 0)
     const entranceGroup = new THREE.Group();
     entranceGroup.position.copy(this.SPAWN_POS);
+    entranceGroup.rotation.y = Math.PI / 2;
 
     const archGeo = new THREE.TorusGeometry(1.6, 0.1, 16, 32, Math.PI);
     const archMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 });
@@ -190,15 +196,6 @@ class QueueSimulationMMS3D {
 
     this.scene.add(entranceGroup);
     this.entrancePortalArch = entranceGroup;
-
-    // Shared Arrival Queue Floor Runner
-    const runnerGeo = new THREE.PlaneGeometry(14.0, 1.8);
-    const runnerMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.8 });
-    const runner = new THREE.Mesh(runnerGeo, runnerMat);
-    runner.rotation.x = -Math.PI / 2;
-    runner.position.set(-7.5, 0.012, 0);
-    runner.receiveShadow = true;
-    this.scene.add(runner);
 
     // Stanchions along Entrance Queue Lane
     this.setupQueueStanchions();
@@ -245,13 +242,145 @@ class QueueSimulationMMS3D {
       this.scene.add(belt);
     };
 
-    // Stanchions top and bottom of arrival line
-    for (let x = -13; x <= -1.0; x += 2.6) {
+    // Stanchions with individual taut belts along both sides of arrival line
+    const postPositions = [];
+    for (let x = -13.2; x <= -1.2; x += 2.4) {
+      postPositions.push(x);
       createPost(x, -1.0);
       createPost(x, 1.0);
     }
-    createBelt(-13, -1.0, -1.0, -1.0);
-    createBelt(-13, 1.0, -1.0, 1.0);
+    for (let j = 0; j < postPositions.length - 1; j++) {
+      createBelt(postPositions[j], -1.0, postPositions[j + 1], -1.0);
+      createBelt(postPositions[j], 1.0, postPositions[j + 1], 1.0);
+    }
+  }
+
+  /**
+   * Helper to generate mathematically crisp, flat floor decal arrows
+   */
+  createFloorArrow(cx, cz, dirX, dirZ, color = 0x0284c7, scale = 1.0) {
+    const len = Math.hypot(dirX, dirZ) || 1;
+    const ux = dirX / len;
+    const uz = dirZ / len;
+    const vx = -uz;
+    const vz = ux;
+
+    const s = scale;
+    const tip   = [cx + 0.45 * s * ux,                     0.019, cz + 0.45 * s * uz];
+    const rBarb = [cx + 0.06 * s * ux + 0.26 * s * vx,     0.019, cz + 0.06 * s * uz + 0.26 * s * vz];
+    const lBarb = [cx + 0.06 * s * ux - 0.26 * s * vx,     0.019, cz + 0.06 * s * uz - 0.26 * s * vz];
+    const rNeck = [cx + 0.06 * s * ux + 0.10 * s * vx,     0.019, cz + 0.06 * s * uz + 0.10 * s * vz];
+    const lNeck = [cx + 0.06 * s * ux - 0.10 * s * vx,     0.019, cz + 0.06 * s * uz - 0.10 * s * vz];
+    const rTail = [cx - 0.36 * s * ux + 0.10 * s * vx,     0.019, cz - 0.36 * s * uz + 0.10 * s * vz];
+    const lTail = [cx - 0.36 * s * ux - 0.10 * s * vx,     0.019, cz - 0.36 * s * uz - 0.10 * s * vz];
+
+    const positions = new Float32Array([
+      ...tip, ...rBarb, ...lBarb,
+      ...rNeck, ...rTail, ...lTail,
+      ...rNeck, ...lTail, ...lNeck
+    ]);
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.computeVertexNormals();
+
+    const mat = new THREE.MeshBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(geo, mat);
+  }
+
+  /**
+   * Rebuilds dynamic floor line architecture, runners, target rings, and guidance arrows
+   */
+  buildDynamicLanesAndArrows() {
+    if (!this.laneMarkersGroup) return;
+
+    // Clear previous dynamic meshes
+    while (this.laneMarkersGroup.children.length > 0) {
+      const child = this.laneMarkersGroup.children[0];
+      this.laneMarkersGroup.remove(child);
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    }
+
+    const s = this.s;
+    const minZ = -((s - 1) / 2) * this.SERVER_SPACING;
+    const maxZ = ((s - 1) / 2) * this.SERVER_SPACING;
+    const exitZ = Math.max(5.0, maxZ + 2.8);
+
+    // 1. Shared Central FIFO Arrival Queue Floor Runner
+    const queueRunnerGeo = new THREE.PlaneGeometry(13.2, 1.8);
+    const queueRunnerMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.8 });
+    const queueRunner = new THREE.Mesh(queueRunnerGeo, queueRunnerMat);
+    queueRunner.rotation.x = -Math.PI / 2;
+    queueRunner.position.set(-7.7, 0.012, 0);
+    queueRunner.receiveShadow = true;
+    this.laneMarkersGroup.add(queueRunner);
+
+    // 2. Queue Slot Floor Rings (Slots 1 to 9)
+    for (let i = 0; i < 9; i++) {
+      const slotX = this.DISPATCH_POS.x - (i * this.SLOT_SPACING);
+      const ringGeo = new THREE.RingGeometry(0.36, 0.44, 24);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x3b82f6,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.55
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(slotX, 0.016, 0);
+      this.laneMarkersGroup.add(ring);
+    }
+
+    // 3. Queue Arrival Directional Arrows (Flow: left to right towards desks -> dirX = 1, dirZ = 0)
+    this.laneMarkersGroup.add(this.createFloorArrow(-11.0, 0, 1, 0, 0x2563eb, 1.0));
+    this.laneMarkersGroup.add(this.createFloorArrow(-7.5, 0, 1, 0, 0x2563eb, 1.0));
+    this.laneMarkersGroup.add(this.createFloorArrow(-4.0, 0, 1, 0, 0x2563eb, 1.0));
+    this.laneMarkersGroup.add(this.createFloorArrow(-2.0, 0, 1, 0, 0x2563eb, 1.0));
+
+    // 4. Distribution Cross-Aisle Runner (Transfer Lane along X = -0.55)
+    const aisleHeight = Math.max(2.4, (maxZ - minZ) + 2.4);
+    const aisleCenterZ = (maxZ + minZ) / 2;
+    const aisleGeo = new THREE.PlaneGeometry(1.4, aisleHeight);
+    const aisleMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.75 });
+    const aisle = new THREE.Mesh(aisleGeo, aisleMat);
+    aisle.rotation.x = -Math.PI / 2;
+    aisle.position.set(-0.55, 0.012, aisleCenterZ);
+    aisle.receiveShadow = true;
+    this.laneMarkersGroup.add(aisle);
+
+    // 5. Transfer Lane Distribution Arrows
+    if (s > 1) {
+      this.serverStations.forEach(st => {
+        if (Math.abs(st.servicePos.z) > 0.4) {
+          const dirZ = st.servicePos.z > 0 ? 1 : -1;
+          const arrowZ = st.servicePos.z * 0.5;
+          this.laneMarkersGroup.add(this.createFloorArrow(-0.55, arrowZ, 0, dirZ, 0x0284c7, 0.85));
+        }
+      });
+    }
+
+    // 6. Dedicated Exit Corridor Floor Runner (Exit Lane along X = 0.55)
+    const exitCorridorLength = (exitZ - (minZ - 1.2));
+    const exitCorridorCenterZ = (minZ - 1.2 + exitZ) / 2;
+    const exitRunnerGeo = new THREE.PlaneGeometry(1.4, exitCorridorLength);
+    const exitRunnerMat = new THREE.MeshStandardMaterial({ color: 0xf0fdf4, roughness: 0.75 });
+    const exitRunner = new THREE.Mesh(exitRunnerGeo, exitRunnerMat);
+    exitRunner.rotation.x = -Math.PI / 2;
+    exitRunner.position.set(0.55, 0.013, exitCorridorCenterZ);
+    exitRunner.receiveShadow = true;
+    this.laneMarkersGroup.add(exitRunner);
+
+    // 7. Green Directional Arrows along Exit Corridor pointing towards Exit Arch
+    const arrowStep = Math.max(2.2, exitCorridorLength / 5);
+    for (let z = minZ - 0.2; z <= exitZ - 1.2; z += arrowStep) {
+      this.laneMarkersGroup.add(this.createFloorArrow(0.55, z, 0, 1, 0x059669, 0.9));
+    }
   }
 
   /**
@@ -393,13 +522,14 @@ class QueueSimulationMMS3D {
         spotLight: spotLight,
         servicePos: new THREE.Vector3(this.SERVICE_X, 0, zOffset),
         deskPos: new THREE.Vector3(this.SERVER_X, 0, zOffset),
-        exitWaypoint: new THREE.Vector3(this.SERVER_X + 2.5, 0, zOffset),
+        exitWaypoint: new THREE.Vector3(0.55, 0, zOffset),
         servedCount: 0
       });
     }
 
     // Set exit portal location according to current server pool width
     this.updateExitPortal();
+    this.buildDynamicLanesAndArrows();
     this.renderServerBoothsUI();
   }
 
@@ -408,12 +538,13 @@ class QueueSimulationMMS3D {
       this.scene.remove(this.exitPortalArch);
     }
 
-    const maxZ = Math.max(7.0, ((this.s - 1) / 2) * this.SERVER_SPACING + 3.0);
-    const exitPos = new THREE.Vector3(6.0, 0, maxZ);
+    const maxZ = ((this.s - 1) / 2) * this.SERVER_SPACING;
+    const exitZ = Math.max(5.0, maxZ + 2.8);
+    const exitPos = new THREE.Vector3(0.55, 0, exitZ);
 
     const exitGroup = new THREE.Group();
     exitGroup.position.copy(exitPos);
-    exitGroup.rotation.y = Math.PI / 2;
+    exitGroup.rotation.y = 0;
 
     const archGeo = new THREE.TorusGeometry(1.6, 0.1, 16, 32, Math.PI);
     const archMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.3 });
@@ -535,6 +666,7 @@ class QueueSimulationMMS3D {
     tag.position.y = 1.95;
     group.add(tag);
 
+    group.position.copy(this.SPAWN_POS);
     this.scene.add(group);
 
     return {
@@ -711,13 +843,25 @@ class QueueSimulationMMS3D {
     station.serviceStartTime = this.simTime;
     station.serviceCompletionTime = this.simTime + serviceDuration;
 
-    // Route customer along waypoints to this server's specific counter
+    // Route customer along proper orthogonal floor corridor lines
     customer.targetAngle = Math.PI / 2; // Face towards counter desk
-    customer.setPath([
-      new THREE.Vector3(-1.0, 0, 0),
-      new THREE.Vector3(0.4, 0, station.servicePos.z),
-      station.servicePos.clone()
-    ]);
+    const waypoints = [];
+    const dispatchX = -0.55;
+
+    // 1. Step to Dispatch Point at cross-aisle junction
+    if (customer.currentPos.x < dispatchX - 0.1) {
+      waypoints.push(new THREE.Vector3(dispatchX, 0, 0));
+    }
+
+    // 2. Move along distribution cross-aisle to assigned counter row
+    if (Math.abs(station.servicePos.z) > 0.05) {
+      waypoints.push(new THREE.Vector3(dispatchX, 0, station.servicePos.z));
+    }
+
+    // 3. Step straight up to the counter desk service bay
+    waypoints.push(station.servicePos.clone());
+
+    customer.setPath(waypoints);
   }
 
   completeService(station) {
@@ -728,14 +872,17 @@ class QueueSimulationMMS3D {
     departing.inService = false;
     departing.assignedServer = null;
 
-    // Customer walks from counter into exit corridor, then through exit portal
-    const maxZ = this.FINAL_EXIT_POS ? this.FINAL_EXIT_POS.z : 8.0;
+    const exitX = 0.55;
+    const exitZ = this.FINAL_EXIT_POS ? this.FINAL_EXIT_POS.z : 6.0;
+
+    // Clean exit path along dedicated Exit Lane:
+    // 1. Step away from counter desk into Exit Corridor: (0.55, 0, z_station)
+    // 2. March along Exit Corridor to Exit Arch Portal: (0.55, 0, exitZ)
+    // 3. Step through the arch portal to outside: (0.55, 0, exitZ + 2.5)
     departing.setPath([
-      new THREE.Vector3(station.servicePos.x + 0.4, 0, station.servicePos.z + 1.2),
-      station.exitWaypoint.clone(),
-      new THREE.Vector3(station.exitWaypoint.x, 0, maxZ),
-      this.FINAL_EXIT_POS.clone(),
-      new THREE.Vector3(this.FINAL_EXIT_POS.x + 2.5, 0, this.FINAL_EXIT_POS.z)
+      new THREE.Vector3(exitX, 0, station.servicePos.z),
+      new THREE.Vector3(exitX, 0, exitZ),
+      new THREE.Vector3(exitX, 0, exitZ + 2.5)
     ]);
 
     station.servedCount++;
@@ -821,7 +968,7 @@ class QueueSimulationMMS3D {
 
           c.torsoGroup.position.y = 0.82 + Math.sin(this.simTime * 2.5 + c.id) * 0.01;
 
-          if (c.isExiting && this.FINAL_EXIT_POS && c.currentPos.distanceTo(this.FINAL_EXIT_POS) < 3.0) {
+          if (c.isExiting) {
             this.scene.remove(c.mesh);
             this.customersInSystem.splice(i, 1);
           }
