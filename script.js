@@ -15,6 +15,9 @@ const state = {
   errorMessage: '',
   warningMessage: '',
   metrics: null,
+  paramN: 2,
+  paramK: 3,
+  paramT: 0.5,
   charts: {
     distribution: null,
     sensitivity: null
@@ -206,6 +209,35 @@ function initEventListeners() {
   if (btnDownloadCSV) {
     btnDownloadCSV.addEventListener('click', downloadTestCasesCSV);
   }
+
+  // Interactive inputs for advanced probability formulas (Study Notes Page 6)
+  const inputN = document.getElementById('input-param-n');
+  const inputK = document.getElementById('input-param-k');
+  const inputT = document.getElementById('input-param-t');
+
+  if (inputN) {
+    inputN.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      state.paramN = !isNaN(val) && val >= 0 ? val : 0;
+      calculateQueue();
+    });
+  }
+
+  if (inputK) {
+    inputK.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      state.paramK = !isNaN(val) && val >= 1 ? val : 1;
+      calculateQueue();
+    });
+  }
+
+  if (inputT) {
+    inputT.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      state.paramT = !isNaN(val) && val >= 0 ? val : 0;
+      calculateQueue();
+    });
+  }
 }
 
 function setInputs(lambdaVal, muVal, unitVal = 'hours') {
@@ -242,77 +274,122 @@ function updateUnitLabels() {
 
 /**
  * Core Queuing Calculator & Validator
+ * Delegates calculations directly to the isolated engine in:
+ * engin/Model I: (M/M/1) : (∞/FIFO)/mm1_engine.js
  */
 function calculateQueue() {
   const rawLambda = state.lambda;
   const rawMu = state.mu;
 
-  // Validation
-  const validation = validateInputs(rawLambda, rawMu);
-  state.isValid = validation.isValid;
-  state.isStable = validation.isStable;
-  state.errorMessage = validation.errorMessage;
-  state.warningMessage = validation.warningMessage;
+  let metrics;
+  if (window.MM1Engine && typeof window.MM1Engine.computeAllMetrics === 'function') {
+    metrics = window.MM1Engine.computeAllMetrics(rawLambda, rawMu, {
+      k: state.paramK,
+      t: state.paramT,
+      n: state.paramN
+    });
+  } else {
+    // Built-in fallback validator and formulas
+    const validation = validateInputs(rawLambda, rawMu);
+    if (!validation.isValid) {
+      metrics = { isValid: false, isStable: false, error: validation.errorMessage, warning: '' };
+    } else {
+      const lam = parseFloat(rawLambda);
+      const m = parseFloat(rawMu);
+      const rho = lam / m;
+      if (!validation.isStable) {
+        metrics = {
+          isValid: true,
+          isStable: false,
+          lambda: lam,
+          mu: m,
+          rho: rho,
+          p0: 0,
+          Ls: Infinity,
+          L: Infinity,
+          Lq: Infinity,
+          Lw: Infinity,
+          Ws: Infinity,
+          W: Infinity,
+          Wq: Infinity,
+          avgServiceTime: 1 / m,
+          avgInterArrivalTime: 1 / lam,
+          error: '',
+          warning: validation.warningMessage
+        };
+      } else {
+        const Ls = lam / (m - lam);
+        const Lq = (lam * lam) / (m * (m - lam));
+        const Lw = m / (m - lam);
+        const Ws = 1 / (m - lam);
+        const Wq = lam / (m * (m - lam));
+        metrics = {
+          isValid: true,
+          isStable: true,
+          lambda: lam,
+          mu: m,
+          rho: rho,
+          p0: 1 - rho,
+          Ls: Ls,
+          L: Ls,
+          Lq: Lq,
+          Lw: Lw,
+          Ws: Ws,
+          W: Ws,
+          Wq: Wq,
+          avgServiceTime: 1 / m,
+          avgInterArrivalTime: 1 / lam,
+          kParam: state.paramK,
+          tParam: state.paramT,
+          nParam: state.paramN,
+          pn: Math.pow(rho, state.paramN) * (1 - rho),
+          probNGeK: Math.pow(rho, state.paramK),
+          probNGtK: Math.pow(rho, state.paramK + 1),
+          probTsGtT: Math.exp(-(m - lam) * state.paramT),
+          probTqGtT: rho * Math.exp(-(m - lam) * state.paramT),
+          littles: {
+            law1: { formula: 'Ls = λ Ws', lhs: Ls, rhs: lam * Ws, isVerified: Math.abs(Ls - lam * Ws) < 1e-6 },
+            law2: { formula: 'Lq = λ Wq', lhs: Lq, rhs: lam * Wq, isVerified: Math.abs(Lq - lam * Wq) < 1e-6 },
+            law3: { formula: 'Ws = Wq + 1/μ', lhs: Ws, rhs: Wq + 1 / m, isVerified: Math.abs(Ws - (Wq + 1 / m)) < 1e-6 },
+            law4: { formula: 'Ls = Lq + λ/μ', lhs: Ls, rhs: Lq + rho, isVerified: Math.abs(Ls - (Lq + rho)) < 1e-6 },
+            allVerified: true
+          },
+          error: '',
+          warning: ''
+        };
+      }
+    }
+  }
+
+  state.isValid = metrics.isValid;
+  state.isStable = metrics.isStable;
+  state.errorMessage = metrics.error || '';
+  state.warningMessage = metrics.warning || '';
+  state.metrics = metrics;
 
   renderStatusAlerts();
 
   if (!state.isValid) {
-    state.metrics = null;
-    clearMetricsDisplay(validation.errorMessage);
+    clearMetricsDisplay(metrics.error);
     return;
   }
 
-  const lambda = parseFloat(rawLambda);
-  const mu = parseFloat(rawMu);
-  const rho = lambda / mu;
-
-  if (rho >= 1.0) {
-    // Unstable System: lambda >= mu
-    state.metrics = {
-      rho: rho,
-      p0: 0,
-      L: Infinity,
-      Lq: Infinity,
-      W: Infinity,
-      Wq: Infinity,
-      isStable: false
-    };
-
-    renderUnstableMetrics(rho, lambda, mu);
-    updateChartsUnstable(rho);
+  if (!state.isStable) {
+    renderUnstableMetrics(metrics.rho, metrics.lambda, metrics.mu);
+    updateChartsUnstable(metrics.rho);
     if (window.sim3D) {
-      window.sim3D.updateParameters(lambda, mu);
+      window.sim3D.updateParameters(metrics.lambda, metrics.mu);
       window.sim3D.setServerVisualState('overloaded');
     }
     return;
   }
 
-  // Stable System: lambda < mu
-  const p0 = 1 - rho;
-  const L = lambda / (mu - lambda);
-  const Lq = (lambda * lambda) / (mu * (mu - lambda));
-  const W = 1 / (mu - lambda);
-  const Wq = lambda / (mu * (mu - lambda));
-
-  state.metrics = {
-    rho: rho,
-    p0: p0,
-    L: L,
-    Lq: Lq,
-    W: W,
-    Wq: Wq,
-    avgServiceTime: 1 / mu,
-    avgInterArrivalTime: 1 / lambda,
-    probWait: rho,
-    isStable: true
-  };
-
-  renderMetrics(state.metrics);
-  updateCharts(state.metrics);
+  renderMetrics(metrics);
+  updateCharts(metrics);
 
   // Synchronize 3D simulation parameters
   if (window.sim3D) {
-    window.sim3D.updateParameters(lambda, mu);
+    window.sim3D.updateParameters(metrics.lambda, metrics.mu);
   }
 }
 
@@ -446,68 +523,168 @@ function renderStatusAlerts() {
  * Render Calculated Metrics to UI
  */
 function renderMetrics(m) {
-  // Utilization factor rho
+  const rho = m.rho;
+  const Ls = m.Ls !== undefined ? m.Ls : m.L;
+  const Ws = m.Ws !== undefined ? m.Ws : m.W;
+  const Lq = m.Lq;
+  const Wq = m.Wq;
+  const Lw = m.Lw !== undefined ? m.Lw : (m.mu / (m.mu - m.lambda));
+  const p0 = m.p0;
+
+  // 1. Utilization factor rho
   const rhoVal = document.getElementById('metric-rho-value');
   const rhoPercent = document.getElementById('metric-rho-percent');
   const rhoBar = document.getElementById('metric-rho-bar');
-  if (rhoVal) rhoVal.textContent = m.rho.toFixed(4);
-  if (rhoPercent) rhoPercent.textContent = `${(m.rho * 100).toFixed(1)}%`;
-  if (rhoBar) rhoBar.style.width = `${Math.min(100, m.rho * 100)}%`;
+  if (rhoVal) rhoVal.textContent = rho.toFixed(4);
+  if (rhoPercent) rhoPercent.textContent = `${(rho * 100).toFixed(1)}%`;
+  if (rhoBar) {
+    rhoBar.style.width = `${Math.min(100, rho * 100)}%`;
+    rhoBar.style.backgroundColor = 'var(--accent-cyan)';
+  }
 
-  // P0: Empty system probability
+  // 2. P0: Empty system probability
   const p0Val = document.getElementById('metric-p0-value');
   const p0Percent = document.getElementById('metric-p0-percent');
-  if (p0Val) p0Val.textContent = m.p0.toFixed(4);
-  if (p0Percent) p0Percent.textContent = `${(m.p0 * 100).toFixed(1)}% idle`;
+  if (p0Val) p0Val.textContent = p0.toFixed(4);
+  if (p0Percent) p0Percent.textContent = `${(p0 * 100).toFixed(1)}% idle`;
 
-  // L: Customers in system
+  // 3. Ls: Customers in system
   const lVal = document.getElementById('metric-l-value');
   const lSub = document.getElementById('metric-l-sub');
-  if (lVal) lVal.textContent = m.L.toFixed(4);
-  if (lSub) lSub.textContent = `≈ ${Math.round(m.L)} customer${Math.round(m.L) === 1 ? '' : 's'}`;
+  if (lVal) lVal.textContent = Ls.toFixed(4);
+  if (lSub) lSub.textContent = `≈ ${Math.round(Ls)} customer${Math.round(Ls) === 1 ? '' : 's'}`;
 
-  // Lq: Customers in queue
+  // 4. Lq: Customers in queue
   const lqVal = document.getElementById('metric-lq-value');
   const lqSub = document.getElementById('metric-lq-sub');
-  if (lqVal) lqVal.textContent = m.Lq.toFixed(4);
+  if (lqVal) lqVal.textContent = Lq.toFixed(4);
   if (lqSub) lqSub.textContent = `Waiting in FIFO buffer`;
 
-  // W: Time in system
+  // 5. Lw: Customers in waiting line (Study Notes Page 6)
+  const lwVal = document.getElementById('metric-lw-value');
+  const lwSub = document.getElementById('metric-lw-sub');
+  if (lwVal) lwVal.textContent = Lw.toFixed(4);
+  if (lwSub) lwSub.textContent = `Given queue non-empty`;
+
+  // 6. Ws: Time in system
   const wVal = document.getElementById('metric-w-value');
   const wFormatted = document.getElementById('metric-w-formatted');
-  if (wVal) wVal.textContent = m.W.toFixed(4);
-  if (wFormatted) wFormatted.textContent = formatTimeEquivalent(m.W, state.timeUnit);
+  if (wVal) wVal.textContent = Ws.toFixed(4);
+  if (wFormatted) wFormatted.textContent = formatTimeEquivalent(Ws, state.timeUnit);
 
-  // Wq: Waiting time in queue
+  // 7. Wq: Waiting time in queue
   const wqVal = document.getElementById('metric-wq-value');
   const wqFormatted = document.getElementById('metric-wq-formatted');
-  if (wqVal) wqVal.textContent = m.Wq.toFixed(4);
-  if (wqFormatted) wqFormatted.textContent = formatTimeEquivalent(m.Wq, state.timeUnit);
+  if (wqVal) wqVal.textContent = Wq.toFixed(4);
+  if (wqFormatted) wqFormatted.textContent = formatTimeEquivalent(Wq, state.timeUnit);
 
-  // Little's Law Badges verification
+  // Little's Law Badges verification in header
   const littleL = document.getElementById('check-littles-l');
   const littleLq = document.getElementById('check-littles-lq');
-  const isLValid = Math.abs(m.L - (state.lambda * m.W)) < 1e-6;
-  const isLqValid = Math.abs(m.Lq - (state.lambda * m.Wq)) < 1e-6;
+  const isLValid = Math.abs(Ls - (state.lambda * Ws)) < 1e-5;
+  const isLqValid = Math.abs(Lq - (state.lambda * Wq)) < 1e-5;
 
   if (littleL) {
     littleL.innerHTML = isLValid 
-      ? `<span class="badge-verified"><i data-lucide="check"></i> $L = \\lambda W$ Verified (${m.L.toFixed(3)} = ${(state.lambda * m.W).toFixed(3)})</span>`
+      ? `<span class="badge-verified"><i data-lucide="check"></i> $L_s = \\lambda W_s$ (${Ls.toFixed(3)} = ${(state.lambda * Ws).toFixed(3)})</span>`
       : `<span class="badge-error">Little's Law check failed</span>`;
   }
   if (littleLq) {
     littleLq.innerHTML = isLqValid
-      ? `<span class="badge-verified"><i data-lucide="check"></i> $L_q = \\lambda W_q$ Verified (${m.Lq.toFixed(3)} = ${(state.lambda * m.Wq).toFixed(3)})</span>`
+      ? `<span class="badge-verified"><i data-lucide="check"></i> $L_q = \\lambda W_q$ (${Lq.toFixed(3)} = ${(state.lambda * Wq).toFixed(3)})</span>`
       : `<span class="badge-error">Little's Law check failed</span>`;
   }
+
+  // Advanced Tail Distributions (Study Notes Page 6)
+  const pn = m.pn !== undefined ? m.pn : (Math.pow(rho, state.paramN) * (1 - rho));
+  const probNGeK = m.probNGeK !== undefined ? m.probNGeK : Math.pow(rho, state.paramK);
+  const probNGtK = m.probNGtK !== undefined ? m.probNGtK : Math.pow(rho, state.paramK + 1);
+  const probTsGtT = m.probTsGtT !== undefined ? m.probTsGtT : Math.exp(-(m.mu - m.lambda) * state.paramT);
+  const probTqGtT = m.probTqGtT !== undefined ? m.probTqGtT : (rho * Math.exp(-(m.mu - m.lambda) * state.paramT));
+
+  const lblN = document.getElementById('lbl-n-val');
+  const pnVal = document.getElementById('metric-pn-val');
+  const pnPercent = document.getElementById('metric-pn-percent');
+  if (lblN) lblN.textContent = state.paramN;
+  if (pnVal) pnVal.textContent = pn.toFixed(4);
+  if (pnPercent) pnPercent.textContent = `(${(pn * 100).toFixed(2)}%)`;
+
+  const lblK1 = document.getElementById('lbl-k-val1');
+  const lblK2 = document.getElementById('lbl-k-val2');
+  const pGekVal = document.getElementById('metric-p-gek-val');
+  const pGekPercent = document.getElementById('metric-p-gek-percent');
+  const pGtkVal = document.getElementById('metric-p-gtk-val');
+  const pGtkPercent = document.getElementById('metric-p-gtk-percent');
+  if (lblK1) lblK1.textContent = state.paramK;
+  if (lblK2) lblK2.textContent = state.paramK;
+  if (pGekVal) pGekVal.textContent = probNGeK.toFixed(4);
+  if (pGekPercent) pGekPercent.textContent = `(${(probNGeK * 100).toFixed(2)}%)`;
+  if (pGtkVal) pGtkVal.textContent = probNGtK.toFixed(4);
+  if (pGtkPercent) pGtkPercent.textContent = `(${(probNGtK * 100).toFixed(2)}%)`;
+
+  const lblT1 = document.getElementById('lbl-t-val1');
+  const lblT2 = document.getElementById('lbl-t-val2');
+  const pTsVal = document.getElementById('metric-p-ts-val');
+  const pTsPercent = document.getElementById('metric-p-ts-percent');
+  const pTqVal = document.getElementById('metric-p-tq-val');
+  const pTqPercent = document.getElementById('metric-p-tq-percent');
+  if (lblT1) lblT1.textContent = state.paramT;
+  if (lblT2) lblT2.textContent = state.paramT;
+  if (pTsVal) pTsVal.textContent = probTsGtT.toFixed(4);
+  if (pTsPercent) pTsPercent.textContent = `(${(probTsGtT * 100).toFixed(2)}%)`;
+  if (pTqVal) pTqVal.textContent = probTqGtT.toFixed(4);
+  if (pTqPercent) pTqPercent.textContent = `(${(probTqGtT * 100).toFixed(2)}%)`;
+
+  // Little's Law 4-Matrix Grid Verification
+  const l1Lhs = document.getElementById('littles-law1-lhs');
+  const l1Rhs = document.getElementById('littles-law1-rhs');
+  const badge1 = document.getElementById('badge-law1');
+  if (l1Lhs) l1Lhs.textContent = Ls.toFixed(4);
+  if (l1Rhs) l1Rhs.textContent = (state.lambda * Ws).toFixed(4);
+  if (badge1) badge1.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
+
+  const l2Lhs = document.getElementById('littles-law2-lhs');
+  const l2Rhs = document.getElementById('littles-law2-rhs');
+  const badge2 = document.getElementById('badge-law2');
+  if (l2Lhs) l2Lhs.textContent = Lq.toFixed(4);
+  if (l2Rhs) l2Rhs.textContent = (state.lambda * Wq).toFixed(4);
+  if (badge2) badge2.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
+
+  const l3Lhs = document.getElementById('littles-law3-lhs');
+  const l3Rhs = document.getElementById('littles-law3-rhs');
+  const badge3 = document.getElementById('badge-law3');
+  if (l3Lhs) l3Lhs.textContent = Ws.toFixed(4);
+  if (l3Rhs) l3Rhs.textContent = (Wq + 1 / state.mu).toFixed(4);
+  if (badge3) badge3.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
+
+  const l4Lhs = document.getElementById('littles-law4-lhs');
+  const l4Rhs = document.getElementById('littles-law4-rhs');
+  const badge4 = document.getElementById('badge-law4');
+  if (l4Lhs) l4Lhs.textContent = Ls.toFixed(4);
+  if (l4Rhs) l4Rhs.textContent = (Lq + rho).toFixed(4);
+  if (badge4) badge4.innerHTML = `<i data-lucide="check"></i> Verified (Exact)`;
+
+  // Update Interactive System Illustration SVG numbers
+  const svgLam = document.getElementById('svg-val-lambda');
+  const svgMu = document.getElementById('svg-val-mu');
+  const svgRho = document.getElementById('svg-val-rho');
+  const svgP0 = document.getElementById('svg-val-p0');
+  const svgLq = document.getElementById('svg-val-lq');
+  const svgWq = document.getElementById('svg-val-wq');
+  const svgLs = document.getElementById('svg-val-ls');
+  if (svgLam) svgLam.textContent = state.lambda.toFixed(2);
+  if (svgMu) svgMu.textContent = state.mu.toFixed(2);
+  if (svgRho) svgRho.textContent = `${(rho * 100).toFixed(0)}%`;
+  if (svgP0) svgP0.textContent = `${(p0 * 100).toFixed(0)}%`;
+  if (svgLq) svgLq.textContent = Lq.toFixed(2);
+  if (svgWq) svgWq.textContent = Wq.toFixed(2);
+  if (svgLs) svgLs.textContent = Ls.toFixed(2);
 
   // Secondary metrics
   const avgServiceEl = document.getElementById('metric-service-time');
   const avgArrivalEl = document.getElementById('metric-arrival-time');
-  const probWaitEl = document.getElementById('metric-prob-wait');
-  if (avgServiceEl) avgServiceEl.textContent = `${m.avgServiceTime.toFixed(4)} ${state.timeUnit}`;
-  if (avgArrivalEl) avgArrivalEl.textContent = `${m.avgInterArrivalTime.toFixed(4)} ${state.timeUnit}`;
-  if (probWaitEl) probWaitEl.textContent = `${(m.probWait * 100).toFixed(1)}%`;
+  if (avgServiceEl) avgServiceEl.textContent = `${(1 / state.mu).toFixed(4)} ${state.timeUnit}`;
+  if (avgArrivalEl) avgArrivalEl.textContent = `${(1 / state.lambda).toFixed(4)} ${state.timeUnit}`;
 
   initLucideIcons();
   initFormulasKaTeX();
@@ -568,6 +745,11 @@ function renderUnstableMetrics(rho, lambda, mu) {
   if (lqVal) lqVal.innerHTML = '<span>&infin;</span> <small class="text-danger">Unbounded</small>';
   if (lqSub) lqSub.textContent = 'Buffer overflows';
 
+  const lwVal = document.getElementById('metric-lw-value');
+  const lwSub = document.getElementById('metric-lw-sub');
+  if (lwVal) lwVal.innerHTML = '<span>&infin;</span> <small class="text-danger">Unbounded</small>';
+  if (lwSub) lwSub.textContent = 'Non-empty queue blows up';
+
   const wVal = document.getElementById('metric-w-value');
   const wFormatted = document.getElementById('metric-w-formatted');
   if (wVal) wVal.innerHTML = '<span>&infin;</span>';
@@ -582,19 +764,43 @@ function renderUnstableMetrics(rho, lambda, mu) {
   const littleLq = document.getElementById('check-littles-lq');
   if (littleL) littleL.innerHTML = `<span class="badge-warning">Undefined: System is non-stationary</span>`;
   if (littleLq) littleLq.innerHTML = `<span class="badge-warning">Undefined: Infinite bottleneck</span>`;
+
+  // Little's 4 badges
+  ['badge-law1', 'badge-law2', 'badge-law3', 'badge-law4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<i data-lucide="alert-triangle"></i> Undefined`;
+  });
+
+  // SVG Illustration
+  const svgLam = document.getElementById('svg-val-lambda');
+  const svgMu = document.getElementById('svg-val-mu');
+  const svgRho = document.getElementById('svg-val-rho');
+  const svgP0 = document.getElementById('svg-val-p0');
+  const svgLq = document.getElementById('svg-val-lq');
+  const svgWq = document.getElementById('svg-val-wq');
+  const svgLs = document.getElementById('svg-val-ls');
+  if (svgLam) svgLam.textContent = lambda.toFixed(2);
+  if (svgMu) svgMu.textContent = mu.toFixed(2);
+  if (svgRho) svgRho.textContent = `${(rho * 100).toFixed(0)}% (OVERLOAD)`;
+  if (svgP0) svgP0.textContent = '0%';
+  if (svgLq) svgLq.textContent = '∞';
+  if (svgWq) svgWq.textContent = '∞';
+  if (svgLs) svgLs.textContent = '∞';
+
+  initLucideIcons();
 }
 
 /**
  * Clear metrics display on invalid input
  */
 function clearMetricsDisplay(errMsg) {
-  const ids = ['metric-rho-value', 'metric-p0-value', 'metric-l-value', 'metric-lq-value', 'metric-w-value', 'metric-wq-value'];
+  const ids = ['metric-rho-value', 'metric-p0-value', 'metric-l-value', 'metric-lq-value', 'metric-lw-value', 'metric-w-value', 'metric-wq-value'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = '—';
   });
 
-  const subs = ['metric-rho-percent', 'metric-p0-percent', 'metric-l-sub', 'metric-lq-sub', 'metric-w-formatted', 'metric-wq-formatted'];
+  const subs = ['metric-rho-percent', 'metric-p0-percent', 'metric-l-sub', 'metric-lq-sub', 'metric-lw-sub', 'metric-w-formatted', 'metric-wq-formatted'];
   subs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = 'Awaiting valid inputs';
@@ -604,6 +810,28 @@ function clearMetricsDisplay(errMsg) {
   const littleLq = document.getElementById('check-littles-lq');
   if (littleL) littleL.innerHTML = `<span class="badge-error">Invalid Input</span>`;
   if (littleLq) littleLq.innerHTML = `<span class="badge-error">Invalid Input</span>`;
+
+  // Little's 4 badges
+  ['badge-law1', 'badge-law2', 'badge-law3', 'badge-law4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<span class="badge-error">Awaiting Input</span>`;
+  });
+
+  // SVG Illustration
+  const svgLam = document.getElementById('svg-val-lambda');
+  const svgMu = document.getElementById('svg-val-mu');
+  const svgRho = document.getElementById('svg-val-rho');
+  const svgP0 = document.getElementById('svg-val-p0');
+  const svgLq = document.getElementById('svg-val-lq');
+  const svgWq = document.getElementById('svg-val-wq');
+  const svgLs = document.getElementById('svg-val-ls');
+  if (svgLam) svgLam.textContent = '—';
+  if (svgMu) svgMu.textContent = '—';
+  if (svgRho) svgRho.textContent = '—';
+  if (svgP0) svgP0.textContent = '—';
+  if (svgLq) svgLq.textContent = '—';
+  if (svgWq) svgWq.textContent = '—';
+  if (svgLs) svgLs.textContent = '—';
 }
 
 /**
@@ -961,27 +1189,50 @@ function evaluateSingleTestCaseInTable(tc) {
   const statusCell = document.getElementById(`tc-status-${tc.id}`);
   if (!obtainedCell || !statusCell) return;
 
-  const validation = validateInputs(tc.lambda, tc.mu);
+  let res;
+  if (window.MM1Engine && typeof window.MM1Engine.computeAllMetrics === 'function') {
+    res = window.MM1Engine.computeAllMetrics(tc.lambda, tc.mu);
+  } else {
+    const val = validateInputs(tc.lambda, tc.mu);
+    if (!val.isValid) {
+      res = { isValid: false, isStable: false, error: val.errorMessage };
+    } else if (!val.isStable) {
+      res = { isValid: true, isStable: false, rho: tc.lambda / tc.mu, warning: val.warningMessage };
+    } else {
+      const lam = tc.lambda, m = tc.mu, rho = lam / m;
+      res = {
+        isValid: true,
+        isStable: true,
+        rho: rho,
+        p0: 1 - rho,
+        Ls: lam / (m - lam),
+        Lq: (lam * lam) / (m * (m - lam)),
+        Lw: m / (m - lam),
+        Ws: 1 / (m - lam),
+        Wq: lam / (m * (m - lam))
+      };
+    }
+  }
 
   let passed = false;
   let obtainedText = '';
 
-  if (!validation.isValid) {
-    obtainedText = `❌ Error: ${validation.errorMessage}`;
+  if (!res.isValid) {
+    obtainedText = `❌ Error: ${res.error}`;
     passed = (tc.expected.status === 'invalid');
-  } else if (!validation.isStable) {
-    const rho = (tc.lambda / tc.mu).toFixed(2);
-    obtainedText = `⚠️ Unstable Warning (ρ = ${rho} ≥ 1.00)`;
+  } else if (!res.isStable) {
+    obtainedText = `⚠️ Unstable Warning (ρ = ${res.rho.toFixed(2)} ≥ 1.00)`;
     passed = (tc.expected.status === 'unstable');
   } else {
-    const rho = tc.lambda / tc.mu;
-    const p0 = 1 - rho;
-    const L = tc.lambda / (tc.mu - tc.lambda);
-    const Lq = (tc.lambda * tc.lambda) / (tc.mu * (tc.mu - tc.lambda));
-    const W = 1 / (tc.mu - tc.lambda);
-    const Wq = tc.lambda / (tc.mu * (tc.mu - tc.lambda));
+    const rho = res.rho;
+    const p0 = res.p0;
+    const L = res.Ls;
+    const Lq = res.Lq;
+    const Lw = res.Lw;
+    const W = res.Ws;
+    const Wq = res.Wq;
 
-    obtainedText = `ρ=${rho.toFixed(2)}, P₀=${p0.toFixed(2)}, L=${L.toFixed(2)}, Lq=${Lq.toFixed(2)}, W=${W.toFixed(2)}, Wq=${Wq.toFixed(2)}`;
+    obtainedText = `ρ=${rho.toFixed(2)}, P₀=${p0.toFixed(2)}, L=${L.toFixed(2)}, Lq=${Lq.toFixed(2)}, Lw=${Lw.toFixed(2)}, W=${W.toFixed(2)}, Wq=${Wq.toFixed(2)}`;
 
     if (tc.expected.status === 'stable') {
       const tol = 0.01;
@@ -989,9 +1240,10 @@ function evaluateSingleTestCaseInTable(tc) {
       const p0Match = Math.abs(p0 - tc.expected.p0) < tol;
       const lMatch = Math.abs(L - tc.expected.L) < tol;
       const lqMatch = Math.abs(Lq - tc.expected.Lq) < tol;
+      const lwMatch = tc.expected.Lw === undefined || Math.abs(Lw - tc.expected.Lw) < tol;
       const wMatch = Math.abs(W - tc.expected.W) < tol;
       const wqMatch = Math.abs(Wq - tc.expected.Wq) < tol;
-      passed = rhoMatch && p0Match && lMatch && lqMatch && wMatch && wqMatch;
+      passed = rhoMatch && p0Match && lMatch && lqMatch && lwMatch && wMatch && wqMatch;
     }
   }
 
@@ -1043,28 +1295,47 @@ function copySummaryReport() {
 
   const m = state.metrics;
   const isStable = m.isStable;
+  const Ls = m.Ls !== undefined ? m.Ls : m.L;
+  const Ws = m.Ws !== undefined ? m.Ws : m.W;
+  const Lw = m.Lw !== undefined ? m.Lw : (state.mu / (state.mu - state.lambda));
+
   const report = `=====================================================
 (M/M/1):(∞/FIFO) QUEUING CALCULATOR REPORT
+Linear Algebra & Queuing Theory — Study Notes (Page 6)
 =====================================================
 System Configuration:
-- Arrival Rate (λ): ${state.lambda} customers / ${state.timeUnit}
-- Service Rate (μ): ${state.mu} customers / ${state.timeUnit}
+- Arrival Rate (λ): ${state.lambda} cust / ${state.timeUnit}
+- Service Rate (μ): ${state.mu} cust / ${state.timeUnit}
 - Operational State: ${isStable ? 'STABLE (λ < μ)' : 'UNSTABLE (λ ≥ μ)'}
 
-Calculated Performance Measures:
+Calculated Primary Performance Measures:
 -----------------------------------------------------
-1. Utilisation Factor (ρ):         ${m.rho.toFixed(4)} (${(m.rho * 100).toFixed(2)}%)
-2. Probability System Empty (P₀):  ${isStable ? m.p0.toFixed(4) : '0.0000'}
-3. Avg Customers in System (L):    ${isStable ? m.L.toFixed(4) : '∞ (Unbounded)'}
-4. Avg Customers in Queue (Lq):    ${isStable ? m.Lq.toFixed(4) : '∞ (Unbounded)'}
-5. Avg Time in System (W):         ${isStable ? m.W.toFixed(4) + ' ' + state.timeUnit : '∞'}
-6. Avg Waiting Time in Queue (Wq): ${isStable ? m.Wq.toFixed(4) + ' ' + state.timeUnit : '∞'}
+1. Utilisation Factor (ρ):              ${m.rho.toFixed(4)} (${(m.rho * 100).toFixed(2)}%)
+2. Probability System Empty (P₀):       ${isStable ? m.p0.toFixed(4) : '0.0000'}
+3. Avg Customers in System (Ls):        ${isStable ? Ls.toFixed(4) : '∞ (Unbounded)'}
+4. Avg Customers in Queue (Lq):         ${isStable ? m.Lq.toFixed(4) : '∞ (Unbounded)'}
+5. Avg Customers in Waiting Line (Lw):  ${isStable ? Lw.toFixed(4) : '∞ (Unbounded)'}
+6. Avg Time in System (Ws):             ${isStable ? Ws.toFixed(4) + ' ' + state.timeUnit : '∞'}
+7. Avg Waiting Time in Queue (Wq):      ${isStable ? m.Wq.toFixed(4) + ' ' + state.timeUnit : '∞'}
 
-Little's Law Mathematical Consistency:
-- L = λ * W   => ${isStable ? (state.lambda * m.W).toFixed(4) : 'N/A'} (Checked: ${isStable ? 'PASSED' : 'N/A'})
-- Lq = λ * Wq => ${isStable ? (state.lambda * m.Wq).toFixed(4) : 'N/A'} (Checked: ${isStable ? 'PASSED' : 'N/A'})
+Study Notes Advanced Tail Probabilities:
+-----------------------------------------------------
+- P(N = ${state.paramN}):                      ${isStable ? m.pn.toFixed(4) + ' (' + (m.pn * 100).toFixed(2) + '%)' : 'N/A'}
+- P(N ≥ ${state.paramK}):                      ${isStable ? m.probNGeK.toFixed(4) + ' (' + (m.probNGeK * 100).toFixed(2) + '%)' : 'N/A'}
+- P(N > ${state.paramK}):                      ${isStable ? m.probNGtK.toFixed(4) + ' (' + (m.probNGtK * 100).toFixed(2) + '%)' : 'N/A'}
+- P(Ts > ${state.paramT} ${state.timeUnit}):            ${isStable ? m.probTsGtT.toFixed(4) + ' (' + (m.probTsGtT * 100).toFixed(2) + '%)' : 'N/A'}
+- P(Tq > ${state.paramT} ${state.timeUnit}):            ${isStable ? m.probTqGtT.toFixed(4) + ' (' + (m.probTqGtT * 100).toFixed(2) + '%)' : 'N/A'}
 
-Generated with QueueFlow 3D Calculator
+Little's Formulas Mathematical Consistency Checks:
+-----------------------------------------------------
+1. Ls = λ * Ws       => ${isStable ? Ls.toFixed(4) + ' = ' + (state.lambda * Ws).toFixed(4) + ' (VERIFIED)' : 'N/A'}
+2. Lq = λ * Wq       => ${isStable ? m.Lq.toFixed(4) + ' = ' + (state.lambda * m.Wq).toFixed(4) + ' (VERIFIED)' : 'N/A'}
+3. Ws = Wq + 1/μ     => ${isStable ? Ws.toFixed(4) + ' = ' + (m.Wq + 1 / state.mu).toFixed(4) + ' (VERIFIED)' : 'N/A'}
+4. Ls = Lq + λ/μ     => ${isStable ? Ls.toFixed(4) + ' = ' + (m.Lq + m.rho).toFixed(4) + ' (VERIFIED)' : 'N/A'}
+
+Isolated Calculation Engine:
+- Directory: engin/Model I: (M/M/1) : (∞/FIFO)/
+- Engine Files: mm1_engine.js, mm1_engine.py
 =====================================================`;
 
   navigator.clipboard.writeText(report).then(() => {

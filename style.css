@@ -1050,6 +1050,267 @@ h1, h2, h3, h4, h5, h6 {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ============================================================================
+   Engine Architecture Showcase Banner
+   ============================================================================ */
+.engine-architecture-banner {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.7), rgba(15, 23, 42, 0.85));
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: 0 8px 32px rgba(168, 85, 247, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.engine-architecture-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--accent-purple), var(--accent-cyan));
+}
+
+.engine-banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.engine-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-purple);
+  flex-shrink: 0;
+}
+
+.engine-banner-info h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.engine-banner-info p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.engine-banner-path-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-md);
+  color: #d8b4fe;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ============================================================================
+   Interactive System Flow Illustration (SVG)
+   ============================================================================ */
+.illustration-card {
+  margin-bottom: 2.25rem;
+  border-color: rgba(56, 189, 248, 0.25);
+  background: linear-gradient(180deg, rgba(12, 18, 34, 0.8), rgba(7, 10, 19, 0.9));
+}
+
+.illustration-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding: 1rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.illustration-svg {
+  max-width: 100%;
+  height: auto;
+  min-width: 720px;
+}
+
+/* SVG Elements Styling */
+.svg-flow-path {
+  stroke-dasharray: 6 6;
+  animation: svgFlow 1.5s linear infinite;
+}
+
+@keyframes svgFlow {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+.svg-node-box {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.svg-node-box:hover {
+  transform: translateY(-2px);
+}
+
+/* ============================================================================
+   Advanced Study Notes Formulas & Little's Matrix
+   ============================================================================ */
+.advanced-math-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.param-interactive-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.param-interactive-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.param-stepper-input {
+  width: 70px;
+  background: rgba(12, 18, 34, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--accent-cyan);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+  outline: none;
+}
+
+.param-stepper-input:focus {
+  border-color: var(--accent-cyan);
+}
+
+.prob-metric-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.45rem 0;
+  font-size: 0.9rem;
+}
+
+.prob-metric-result-row span.label {
+  color: var(--text-muted);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.prob-metric-result-row span.val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--accent-cyan);
+}
+
+.prob-metric-result-row span.sub-percent {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-left: 0.35rem;
+}
+
+/* Little's Formulas Matrix Grid */
+.littles-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.littles-matrix-card {
+  background: rgba(12, 18, 34, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.15rem;
+  transition: var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.littles-matrix-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-emerald);
+}
+
+.littles-matrix-card:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+}
+
+.littles-matrix-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.littles-matrix-formula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.65rem;
+}
+
+.littles-matrix-values {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.littles-matrix-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
 /* Responsive Breakpoints */
 @media (max-width: 1080px) {
   .dashboard-grid {
@@ -1098,3 +1359,4 @@ h1, h2, h3, h4, h5, h6 {
     display: block !important;
   }
 }
+

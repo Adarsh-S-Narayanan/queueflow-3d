@@ -12,10 +12,11 @@
       "p0": 0.5000,
       "L": 1.0000,
       "Lq": 0.5000,
+      "Lw": 2.0000,
       "W": 0.5000,
       "Wq": 0.2500
     },
-    "notes": "Utilization is 50%. On average, 1 customer in system (0.5 in queue, 0.5 at server)."
+    "notes": "Utilization is 50%. On average, 1 customer in system (0.5 in queue, 0.5 at server). Lw = 2.0."
   },
   {
     "id": 2,
@@ -30,10 +31,11 @@
       "p0": 0.4000,
       "L": 1.5000,
       "Lq": 0.9000,
+      "Lw": 2.5000,
       "W": 0.5000,
       "Wq": 0.3000
     },
-    "notes": "Utilization is 60%. Average time in system is 0.50 hours (30 min), queue wait is 0.30 hours (18 min)."
+    "notes": "Utilization is 60%. Average time in system is 0.50 hours (30 min), queue wait is 0.30 hours (18 min). Lw = 2.5."
   },
   {
     "id": 3,
@@ -48,10 +50,11 @@
       "p0": 0.2000,
       "L": 4.0000,
       "Lq": 3.2000,
+      "Lw": 5.0000,
       "W": 0.5000,
       "Wq": 0.4000
     },
-    "notes": "Utilization is 80%. System empty only 20% of the time. Average queue length increases to 3.2 customers."
+    "notes": "Utilization is 80%. System empty only 20% of the time. Average queue length increases to 3.2 customers. Lw = 5.0."
   },
   {
     "id": 4,
@@ -66,10 +69,11 @@
       "p0": 0.6667,
       "L": 0.5000,
       "Lq": 0.1667,
+      "Lw": 1.5000,
       "W": 1.0000,
       "Wq": 0.3333
     },
-    "notes": "Arrival every 2 hours, service takes 40 minutes (2/3 hr). System remains clear 66.7% of time."
+    "notes": "Arrival every 2 hours, service takes 40 minutes (2/3 hr). System remains clear 66.7% of time. Lw = 1.5."
   },
   {
     "id": 5,
