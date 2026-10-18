@@ -1,0 +1,144 @@
+[
+  {
+    "id": 1,
+    "title": "Standard Balanced 2-Server Queue",
+    "description": "Standard multi-server scenario with s=2 parallel counters handling moderate arrival flow.",
+    "category": "normal",
+    "lambda": 3.0,
+    "mu": 2.0,
+    "s": 2,
+    "expected": {
+      "status": "stable",
+      "rho": 0.7500,
+      "p0": 0.1429,
+      "prob_wait": 0.6429,
+      "L": 3.4286,
+      "Lq": 1.9286,
+      "W": 1.1429,
+      "Wq": 0.6429,
+      "Lw": 3.0000
+    },
+    "notes": "Utilization ρ = 75%. P₀ = 1/7 (14.29%). Erlang C wait probability = 9/14 (64.29%). Expected queue length Lq = 1.93 customers. Little's Laws fully satisfied."
+  },
+  {
+    "id": 2,
+    "title": "High-Efficiency 3-Server Service Center",
+    "description": "Multi-server facility with s=3 servers operating at 66.7% capacity load.",
+    "category": "normal",
+    "lambda": 4.0,
+    "mu": 2.0,
+    "s": 3,
+    "expected": {
+      "status": "stable",
+      "rho": 0.6667,
+      "p0": 0.1111,
+      "prob_wait": 0.4444,
+      "L": 2.8889,
+      "Lq": 0.8889,
+      "W": 0.7222,
+      "Wq": 0.2222,
+      "Lw": 2.0000
+    },
+    "notes": "Utilization ρ = 66.67%. P₀ = 1/9 (11.11%). Probability customer has to wait = 4/9 (44.44%). Average wait in queue is 0.222 hours (13.3 mins)."
+  },
+  {
+    "id": 3,
+    "title": "Single-Server Equivalence Check (s=1)",
+    "description": "Baseline verification proving M/M/s reduces precisely to classic M/M/1 when s=1.",
+    "category": "normal",
+    "lambda": 2.0,
+    "mu": 4.0,
+    "s": 1,
+    "expected": {
+      "status": "stable",
+      "rho": 0.5000,
+      "p0": 0.5000,
+      "prob_wait": 0.5000,
+      "L": 1.0000,
+      "Lq": 0.5000,
+      "W": 0.5000,
+      "Wq": 0.2500,
+      "Lw": 1.0000
+    },
+    "notes": "Exact convergence with Model I M/M/1. Server busy 50% of the time, Lq = 0.5, Wq = 0.25 hours (15 mins)."
+  },
+  {
+    "id": 4,
+    "title": "5-Server High-Volume Enterprise Pool",
+    "description": "Large parallel server pool handling 16 arrivals/hr across 5 servers.",
+    "category": "normal",
+    "lambda": 16.0,
+    "mu": 4.0,
+    "s": 5,
+    "expected": {
+      "status": "stable",
+      "rho": 0.8000,
+      "p0": 0.0130,
+      "prob_wait": 0.5541,
+      "L": 6.2165,
+      "Lq": 2.2165,
+      "W": 0.3885,
+      "Wq": 0.1385,
+      "Lw": 4.0000
+    },
+    "notes": "Utilization ρ = 80%. P(wait) = 55.41%. Even under high load, 5 servers keep queue wait under 8.3 minutes (0.1385 hrs)."
+  },
+  {
+    "id": 5,
+    "title": "Critical Boundary Condition (λ = s·μ)",
+    "description": "Edge case where arrival rate matches total server pool capacity (s·μ = 4.0), yielding ρ = 1.00.",
+    "category": "unstable",
+    "lambda": 4.0,
+    "mu": 2.0,
+    "s": 2,
+    "expected": {
+      "status": "unstable",
+      "rho": 1.0000,
+      "warning": "Critical Boundary Condition (λ = s·μ): Utilization ρ = 1.00. Stochastic fluctuations prevent the queue from reaching equilibrium. Backlog grows without bound."
+    },
+    "notes": "System is null-recurrent. Infinite queue variance makes steady state impossible."
+  },
+  {
+    "id": 6,
+    "title": "Severe Overload Multi-Server Surge (λ > s·μ)",
+    "description": "Incoming arrival rate strictly exceeds combined server capacity (20 > 16), creating runaway queues.",
+    "category": "unstable",
+    "lambda": 20.0,
+    "mu": 4.0,
+    "s": 4,
+    "expected": {
+      "status": "unstable",
+      "rho": 1.2500,
+      "warning": "Severe Overload Warning (λ > s·μ, ρ = 1.2500): Arrival rate exceeds total server pool processing capacity. Backlog explodes infinitely (Lq → ∞, Wq → ∞)."
+    },
+    "notes": "System is transient. Definite backlog accumulation without stationary limits."
+  },
+  {
+    "id": 7,
+    "title": "Invalid Negative Arrival Rate",
+    "description": "Negative arrival rate input triggering robust error rejection.",
+    "category": "invalid",
+    "lambda": -2.0,
+    "mu": 3.0,
+    "s": 2,
+    "expected": {
+      "status": "error",
+      "error": "Arrival rate (λ) must be strictly greater than zero (> 0)."
+    },
+    "notes": "Sanitization blocks execution before mathematical computation."
+  },
+  {
+    "id": 8,
+    "title": "Invalid Server Count (s = 0)",
+    "description": "Zero server count rejected by input validation rules.",
+    "category": "invalid",
+    "lambda": 4.0,
+    "mu": 2.0,
+    "s": 0,
+    "expected": {
+      "status": "error",
+      "error": "Number of servers (s) must be a positive integer (s ≥ 1)."
+    },
+    "notes": "Queuing models require at least one functional service station."
+  }
+]

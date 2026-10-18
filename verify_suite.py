@@ -15,10 +15,29 @@ import importlib.util
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Dynamic module loading from isolated engine directory
-engine_path = os.path.join(os.path.dirname(__file__), "engin", "Model I：(M／M／1)：(∞／FIFO)", "mm1_engine.py")
+engine_candidates = [
+    os.path.join(os.path.dirname(__file__), "Engine", "Model I：(M／M／1)：(∞／FIFO)", "mm1_engine.py"),
+]
 
-if not os.path.exists(engine_path):
-    raise FileNotFoundError(f"Isolated engine not found at: {engine_path}")
+engine_path = None
+for p in engine_candidates:
+    if os.path.exists(p):
+        engine_path = p
+        break
+
+if not engine_path:
+    # Try directory scan in Engine
+    dir_full = os.path.join(os.path.dirname(__file__), "Engine")
+    if os.path.exists(dir_full):
+        for sub in os.listdir(dir_full):
+            if "Model I" in sub or ("1" in sub and "FIFO" in sub):
+                candidate = os.path.join(dir_full, sub, "mm1_engine.py")
+                if os.path.exists(candidate):
+                    engine_path = candidate
+                    break
+
+if not engine_path or not os.path.exists(engine_path):
+    raise FileNotFoundError(f"Isolated engine not found in Engine directory: {engine_path}")
 
 spec = importlib.util.spec_from_file_location("mm1_engine", engine_path)
 engine_mod = importlib.util.module_from_spec(spec)

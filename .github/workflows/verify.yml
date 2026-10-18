@@ -18,6 +18,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run Test Suite
+      - name: Run Test Suites
         run: |
           python verify_suite.py
+          python verify_mms_suite.py

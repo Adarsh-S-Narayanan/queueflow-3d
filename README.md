@@ -1,8 +1,12 @@
-# QueueFlow 3D: $(M/M/1):(\infty/\text{FIFO})$ Queuing Theory Platform & Calculator
+# QueueFlow 3D: Queuing Theory Platform & Calculators
+## Model I: $(M/M/1):(\infty/\text{FIFO})$ & Model II: $(M/M/s):(\infty/\text{FIFO})$
 
-A modern, clean, interactive 3D Queuing Theory Calculator, Simulator, and Analytics Dashboard designed for the **$(M/M/1):(\infty/\text{FIFO})$** queuing model. Built with pure web standards (HTML5, CSS3, JavaScript, Three.js, Chart.js, and KaTeX) and ready to host directly on **GitHub Pages** with zero build configuration.
+A modern, interactive 3D and multi-server Queuing Theory Calculator, Simulator, and Analytics Dashboard designed for both the single-server **$(M/M/1):(\infty/\text{FIFO})$** and multi-server **$(M/M/s):(\infty/\text{FIFO})$** queuing models. Built with pure web standards (HTML5, CSS3, JavaScript, Three.js, Chart.js, and KaTeX) and ready to host directly on **GitHub Pages** with zero build configuration.
 
-Based on the **Linear Algebra & Queuing Theory — Study Notes (Page 6)**.
+- **Single-Server Page**: [`index.html`](file:///d:/code/class/maths_assingment1/index.html)
+- **Multi-Server Page**: [`mms.html`](file:///d:/code/class/maths_assingment1/mms.html)
+- **Model I Engine**: `Engine/Model I：(M／M／1)：(∞／FIFO)/`
+- **Model II Engine**: `Engine/(M／M／s)：(ꝏ／FIFO)/`
 
 ---
 
@@ -21,8 +25,8 @@ Based on the **Linear Algebra & Queuing Theory — Study Notes (Page 6)**.
    - Real-time **Little's Law Verification Badges** ($L_s = \lambda W_s$, $L_q = \lambda W_q$, $W_s = W_q + \frac{1}{\mu}$, $L_s = L_q + \frac{\lambda}{\mu}$) confirming exact mathematical consistency.
 
 2. **Isolated Mathematical Engine Architecture**:
-   - As requested, all mathematical equations, probability distributions, stability checks, and Little's formulas are completely isolated into a dedicated folder:
-     `engin/Model I: (M/M/1) : (∞/FIFO)/`
+   - As requested, all mathematical equations, probability distributions, stability checks, and Little's formulas are completely isolated into dedicated folders:
+     `Engine/Model I：(M／M／1)：(∞／FIFO)/` and `Engine/(M／M／s)：(ꝏ／FIFO)/`
    - Contains:
      - `mm1_engine.js`: Pure mathematical engine (UMD module, browser global `window.MM1Engine`, Node.js / ES module compatible)
      - `mm1_engine.py`: Pure Python 3 mathematical engine with typing and verification methods
@@ -200,22 +204,34 @@ This repository is structured to deploy on GitHub Pages without any extra build 
 
 ```
 maths_assingment1/
-├── engin/                                       # Isolated Mathematical Engine Directory
-│   └── Model I：(M／M／1)：(∞／FIFO)/             # Folder isolating all Model I math equations
-│       ├── mm1_engine.js                        # Pure JavaScript calculation module (UMD/ES6)
-│       ├── mm1_engine.py                        # Pure Python 3 mathematical calculation module
-│       ├── test_engine.py                       # Self-contained Python unit tests
-│       └── README.md                            # Mathematical derivation & engine documentation
+├── Engine/                                      # Multi-Server Mathematical Engine Directory
+│   └── (M／M／s)：(ꝏ／FIFO)/                     # Folder isolating (M/M/s):(ꝏ/FIFO) equations
+│       ├── mms_engine.js                        # Pure JavaScript calculation module (UMD/window.MMsEngine)
+│       ├── mms_engine.py                        # Pure Python 3 mathematical calculation module
+│       ├── test_mms_engine.py                   # Self-contained Python unit tests
+│       ├── README.md                            # Mathematical derivation & Erlang C documentation
+│       └── __init__.py                          # Python package marker
+├── engin/                                       # Single-Server Engine Directory & Canonical Mirrors
+│   ├── Model I：(M／M／1)：(∞／FIFO)/             # Folder isolating Model I math equations
+│   │   ├── mm1_engine.js                        # Pure JavaScript calculation module (UMD/ES6)
+│   │   ├── mm1_engine.py                        # Pure Python 3 mathematical calculation module
+│   │   ├── test_engine.py                       # Self-contained Python unit tests
+│   │   └── README.md                            # Mathematical derivation & engine documentation
+│   └── (M／M／s)：(ꝏ／FIFO)/                     # Mirrored engine files for universal path compatibility
 ├── .github/
 │   └── workflows/
-│       └── verify.yml                           # GitHub Actions CI verifying Python test suite
+│       └── verify.yml                           # GitHub Actions CI verifying both test suites
 ├── .nojekyll                                    # Prevents Jekyll from ignoring special directories
-├── index.html                                   # Semantic HTML5 layout, UI controls & KaTeX math
-├── style.css                                    # Modern glassmorphism, responsive styles, 3D HUD
-├── script.js                                    # UI event handlers, Chart.js & engine integration
-├── simulation3d.js                              # Three.js 3D discrete-event queue simulator
-├── test_cases.json                              # Structured verified test cases (normal, unstable, invalid)
-├── verify_suite.py                              # Python test runner loading from isolated engine
+├── index.html                                   # Single-Server (M/M/1) 3D Calculator & Simulator
+├── mms.html                                     # Multi-Server (M/M/s) Parallel Pool Calculator & Stage
+├── style.css                                    # Modern glassmorphism, responsive styles, 3D HUD & booth grid
+├── script.js                                    # UI event handlers, Chart.js & M/M/1 integration
+├── mms_script.js                                # UI event handlers, Chart.js & M/M/s simulation engine
+├── simulation3d.js                              # Three.js 3D discrete-event queue simulator (M/M/1)
+├── test_cases.json                              # Verified M/M/1 test cases
+├── mms_test_cases.json                          # Verified M/M/s test cases (normal, boundary, overloaded, invalid)
+├── verify_suite.py                              # Python test runner verifying M/M/1 against test_cases.json
+├── verify_mms_suite.py                          # Python test runner verifying M/M/s against mms_test_cases.json
 └── README.md                                    # Comprehensive submission manual & user guide
 ```
 
@@ -224,8 +240,8 @@ maths_assingment1/
 ## 🛠️ Technologies Used
 
 - **HTML5 & Vanilla JavaScript (ES6+)**: High performance, zero compilation needed.
-- **Three.js (r128)**: WebGL 3D rendering of the queue platform, server kiosk, and moving customer entities.
-- **Chart.js (v4.4)**: Responsive data visualization for state distributions and sensitivity curves.
+- **Three.js (r128)**: WebGL 3D rendering of the single-server queue platform and animated customer entities.
+- **Chart.js (v4.4)**: Responsive data visualization for state distributions, multi-server scaling, and sensitivity curves.
 - **KaTeX (v0.16)**: High-speed LaTeX mathematical typesetting for formulas.
 - **Lucide Icons**: Clean, modern iconography.
 - **CSS3 Glassmorphism**: Radial backdrop blurs, glowing cyber gradients, and responsive grid layouts.
@@ -235,7 +251,6 @@ maths_assingment1/
 
 ## 🎓 Academic Submission Details
 
-- **Topic**: $(M/M/1):(\infty/\text{FIFO})$ Queuing System Calculator & Simulator
+- **Topic**: Single-Server $(M/M/1):(\infty/\text{FIFO})$ & Multi-Server $(M/M/s):(\infty/\text{FIFO})$ Queuing System Calculators & Simulators
 - **Course**: Mathematics / Operations Research / Queuing Theory
-- **Assignment**: Computer Assignment 1 - Single-Server Queuing Model
-- **Status**: 100% Complete & Verified
+- **Status**: 100% Complete & Verified across all test cases (both M/M/1 and M/M/s)

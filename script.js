@@ -294,7 +294,7 @@ function updateUnitLabels() {
 /**
  * Core Queuing Calculator & Validator
  * Delegates calculations directly to the isolated engine in:
- * engin/Model I: (M/M/1) : (∞/FIFO)/mm1_engine.js
+ * Engine/Model I: (M/M/1) : (∞/FIFO)/mm1_engine.js
  */
 function calculateQueue() {
   const rawLambda = state.lambda;
@@ -1286,7 +1286,7 @@ Little's Formulas Mathematical Consistency Checks:
 4. Ls = Lq + λ/μ     => ${isStable ? Ls.toFixed(4) + ' = ' + (m.Lq + m.rho).toFixed(4) + ' (VERIFIED)' : 'N/A'}
 
 Isolated Calculation Engine:
-- Directory: engin/Model I: (M/M/1) : (∞/FIFO)/
+- Directory: Engine/Model I: (M/M/1) : (∞/FIFO)/
 - Engine Files: mm1_engine.js, mm1_engine.py
 =====================================================`;
 
