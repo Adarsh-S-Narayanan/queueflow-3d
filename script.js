@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   calculateQueue();
   renderTestCasesTable();
   initFormulasKaTeX();
+  initNavbar();
 });
 
 function initLucideIcons() {
@@ -1352,4 +1353,121 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+/**
+ * Initialize Enhanced Navbar Interactions:
+ * - Scrollspy active link highlighting
+ * - Scroll reading progress bar
+ * - Elevation shadow & compact state on scroll
+ * - Mobile toggle drawer with outside-click and Escape handling
+ */
+function initNavbar() {
+  const navbar = document.getElementById('app-navbar');
+  const progressBar = document.getElementById('navbar-progress-bar');
+  const toggleBtn = document.getElementById('nav-mobile-toggle');
+  const drawer = document.getElementById('navbar-mobile-drawer');
+  const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+  const mobileLinks = document.querySelectorAll('.mobile-nav-links a[href^="#"]');
+
+  // Mobile menu drawer toggle
+  if (toggleBtn && drawer) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = drawer.classList.toggle('open');
+      toggleBtn.setAttribute('aria-expanded', isOpen);
+      toggleBtn.innerHTML = isOpen ? `<i data-lucide="x"></i>` : `<i data-lucide="menu"></i>`;
+      initLucideIcons();
+    });
+
+    // Close drawer on clicking any mobile anchor link
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        drawer.classList.remove('open');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.innerHTML = `<i data-lucide="menu"></i>`;
+        initLucideIcons();
+      });
+    });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+      if (drawer.classList.contains('open') && !drawer.contains(e.target) && !toggleBtn.contains(e.target)) {
+        drawer.classList.remove('open');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.innerHTML = `<i data-lucide="menu"></i>`;
+        initLucideIcons();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('open')) {
+        drawer.classList.remove('open');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.innerHTML = `<i data-lucide="menu"></i>`;
+        initLucideIcons();
+      }
+    });
+  }
+
+  // Scroll Progress & Navbar Elevation Shadow
+  const updateScroll = () => {
+    const scrollY = window.scrollY || window.pageYOffset;
+    if (navbar) {
+      navbar.classList.toggle('navbar-scrolled', scrollY > 15);
+    }
+
+    if (progressBar) {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (scrollY / docHeight) * 100 : 0;
+      progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    }
+  };
+
+  // Scrollspy for Active Section Link
+  const sections = [];
+  navLinks.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const target = document.querySelector(href);
+      if (target) {
+        sections.push({ id: href, element: target, link });
+      }
+    }
+  });
+
+  const updateScrollspy = () => {
+    const scrollPos = (window.scrollY || window.pageYOffset) + 120;
+    let currentId = '';
+
+    for (let i = sections.length - 1; i >= 0; i--) {
+      const sec = sections[i];
+      if (sec.element.offsetTop <= scrollPos) {
+        currentId = sec.id;
+        break;
+      }
+    }
+
+    navLinks.forEach(link => {
+      const isMatch = link.getAttribute('href') === currentId;
+      link.classList.toggle('active', isMatch);
+    });
+  };
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        updateScroll();
+        updateScrollspy();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // Initial trigger
+  updateScroll();
+  updateScrollspy();
 }

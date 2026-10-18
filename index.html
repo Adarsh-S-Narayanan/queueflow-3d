@@ -20,41 +20,84 @@
 <body>
 
   <!-- Navigation Bar -->
-  <header class="navbar">
-    <div class="container">
-      <a href="#" class="nav-brand">
-        <div class="brand-icon">
-          <i data-lucide="layers"></i>
-        </div>
-        <div class="brand-info">
-          <h1>QueueFlow <span class="gradient-text">3D</span></h1>
-          <span class="brand-sub">(M/M/1) : (&infin;/FIFO) Analysis</span>
-        </div>
-      </a>
+  <header class="navbar" id="app-navbar">
+    <div class="navbar-progress-bar" id="navbar-progress-bar"></div>
+    <div class="container navbar-container">
+      
+      <!-- Brand & Model Switcher Group -->
+      <div class="navbar-brand-group">
+        <a href="index.html" class="nav-brand" aria-label="QueueFlow 3D Home">
+          <div class="brand-icon">
+            <i data-lucide="layers"></i>
+          </div>
+          <div class="brand-info">
+            <h1>QueueFlow <span class="gradient-text">3D</span></h1>
+            <span class="brand-sub">(M/M/1) : (&infin;/FIFO)</span>
+          </div>
+        </a>
 
-      <!-- Queuing Model Switcher -->
-      <div class="model-switcher">
-        <a href="index.html" class="active" title="Single Server (M/M/1):(∞/FIFO)"><i data-lucide="user"></i> (M/M/1)</a>
-        <a href="mms.html" title="Multi-Server (M/M/s):(∞/FIFO)"><i data-lucide="users"></i> (M/M/s)</a>
+        <!-- Queuing Model Switcher -->
+        <nav class="model-switcher" aria-label="Queuing Model Selection">
+          <a href="index.html" class="model-tab active" title="Single Server (M/M/1):(∞/FIFO)">
+            <i data-lucide="user"></i>
+            <span>M/M/1</span>
+          </a>
+          <a href="mms.html" class="model-tab" title="Multi-Server (M/M/s):(∞/FIFO)">
+            <i data-lucide="users"></i>
+            <span>M/M/s</span>
+          </a>
+        </nav>
       </div>
 
-      <ul class="nav-links">
-        <li><a href="#calculator-section">Calculator</a></li>
-        <li><a href="#simulation-section">3D Stage</a></li>
-        <li><a href="#metrics-section">Metrics</a></li>
-        <li><a href="#charts-section">Analytics</a></li>
-        <li><a href="#testcases-section">Test Cases</a></li>
-        <li><a href="#guide-section">User Guide</a></li>
-        <li><a href="README.md" target="_blank" title="View Markdown User Guide & Documentation"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px;margin-right:2px;"></i> README</a></li>
-      </ul>
+      <!-- Center Nav Links -->
+      <nav class="navbar-menu" id="navbar-menu" aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#calculator-section"><i data-lucide="sliders" class="nav-icon"></i><span>Calculator</span></a></li>
+          <li><a href="#simulation-section"><i data-lucide="box" class="nav-icon"></i><span>3D Stage</span></a></li>
+          <li><a href="#metrics-section"><i data-lucide="activity" class="nav-icon"></i><span>Metrics</span></a></li>
+          <li><a href="#charts-section"><i data-lucide="line-chart" class="nav-icon"></i><span>Analytics</span></a></li>
+          <li><a href="#testcases-section"><i data-lucide="check-circle-2" class="nav-icon"></i><span>Tests</span></a></li>
+          <li><a href="#guide-section"><i data-lucide="book-open" class="nav-icon"></i><span>Guide</span></a></li>
+          <li><a href="README.md" target="_blank" class="nav-link-doc" title="View Markdown User Guide & Documentation"><i data-lucide="file-text" class="nav-icon"></i><span>Docs</span><i data-lucide="external-link" class="nav-doc-external"></i></a></li>
+        </ul>
+      </nav>
 
-      <div class="nav-actions">
-        <div id="nav-system-status-badge" class="status-pill status-stable">
+      <!-- Right Nav Actions -->
+      <div class="navbar-actions">
+        <div id="nav-system-status-badge" class="status-pill status-stable" title="Engine Stability Status">
           <span class="pulse-dot"></span> System Stable
         </div>
-        <button id="btn-copy-report" class="btn btn-secondary btn-sm" title="Copy calculation summary report">
-          <i data-lucide="clipboard-copy"></i> Copy Report
+        <button id="btn-copy-report" class="btn btn-secondary btn-sm nav-btn-copy" title="Copy calculation summary report to clipboard">
+          <i data-lucide="clipboard-copy"></i>
+          <span>Copy Report</span>
         </button>
+        <button class="nav-mobile-toggle" id="nav-mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <i data-lucide="menu" id="nav-toggle-icon"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="navbar-mobile-drawer" id="navbar-mobile-drawer">
+      <div class="mobile-drawer-inner">
+        <div class="mobile-model-switcher-row">
+          <span class="drawer-label">Queuing Model</span>
+          <div class="model-switcher">
+            <a href="index.html" class="model-tab active"><i data-lucide="user"></i> (M/M/1) Single Server</a>
+            <a href="mms.html" class="model-tab"><i data-lucide="users"></i> (M/M/s) Multi Server</a>
+          </div>
+        </div>
+
+        <ul class="mobile-nav-links">
+          <li><a href="#calculator-section" class="mobile-link"><i data-lucide="sliders"></i> Calculator Inputs</a></li>
+          <li><a href="#simulation-section" class="mobile-link"><i data-lucide="box"></i> 3D Queue Stage</a></li>
+          <li><a href="#metrics-section" class="mobile-link"><i data-lucide="activity"></i> Performance Measures</a></li>
+          <li><a href="#charts-section" class="mobile-link"><i data-lucide="line-chart"></i> Sensitivity Analytics</a></li>
+          <li><a href="#testcases-section" class="mobile-link"><i data-lucide="check-circle-2"></i> Verification Test Suite</a></li>
+          <li><a href="#guide-section" class="mobile-link"><i data-lucide="book-open"></i> Mathematical Guide</a></li>
+          <li><a href="README.md" target="_blank" class="mobile-link"><i data-lucide="file-text"></i> README Documentation <i data-lucide="external-link" style="width:12px;height:12px;margin-left:auto;"></i></a></li>
+        </ul>
       </div>
     </div>
   </header>
