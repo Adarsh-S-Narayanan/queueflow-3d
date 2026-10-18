@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>(M/M/1):(∞/FIFO) Queue Intelligence - 3D Calculator & Simulator</title>
+  <meta name="description" content="Clean, modern, interactive 3D Queuing Theory Calculator and Simulator for (M/M/1):(∞/FIFO) queue systems. Built for GitHub Pages hosting.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- KaTeX for beautiful math formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container">
+      <a href="#" class="nav-brand">
+        <div class="brand-icon">
+          <i data-lucide="layers"></i>
+        </div>
+        <div class="brand-info">
+          <h1>QueueFlow <span class="gradient-text">3D</span></h1>
+          <span class="brand-sub">(M/M/1) : (&infin;/FIFO) Analysis</span>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#calculator-section">Calculator</a></li>
+        <li><a href="#simulation-section">3D Stage</a></li>
+        <li><a href="#metrics-section">Metrics</a></li>
+        <li><a href="#charts-section">Analytics</a></li>
+        <li><a href="#testcases-section">Test Cases</a></li>
+        <li><a href="#guide-section">User Guide</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <div id="nav-system-status-badge" class="status-pill status-stable">
+          <span class="pulse-dot"></span> System Stable
+        </div>
+        <button id="btn-copy-report" class="btn btn-secondary btn-sm" title="Copy calculation summary report">
+          <i data-lucide="clipboard-copy"></i> Copy Report
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Header -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-header">
+        <div class="hero-tag">
+          <i data-lucide="activity"></i> Stochastic Queuing Theory Engine
+        </div>
+        <h2 class="hero-title">
+          Interactive <span class="gradient-text">(M/M/1):(∞/FIFO)</span> Queue Calculator
+        </h2>
+        <p class="hero-subtitle">
+          Real-time steady-state performance metrics, live 3D discrete-event queue simulation, sensitivity curves, and automated test suite. Ready for GitHub Pages deployment.
+        </p>
+      </div>
+
+      <!-- Main Interactive Dashboard Grid -->
+      <div class="dashboard-grid">
+        
+        <!-- Left Column: Input Station & Validation -->
+        <div class="glass-card" id="calculator-section">
+          <div class="card-header-bar">
+            <h3 class="card-title">
+              <i data-lucide="sliders"></i> Input Parameters
+            </h3>
+            <span class="metric-formula-tag">Steady-State Mode</span>
+          </div>
+
+          <!-- Presets & Time Unit Row -->
+          <div class="row-dual-controls">
+            <div>
+              <label class="input-label" for="select-preset">Presets</label>
+              <select id="select-preset" class="select-control">
+                <option value="custom" selected>Default / Custom (λ=2, μ=4)</option>
+                <option value="bank">Bank Teller (λ=15, μ=20/hr)</option>
+                <option value="webserver">Web API Server (λ=80, μ=100/s)</option>
+                <option value="drivethru">Drive-Thru (λ=25, μ=30/hr)</option>
+                <option value="printer">Shared Office Printer (λ=4, μ=6/m)</option>
+                <option value="critical">Critical Boundary (λ=10, μ=10)</option>
+                <option value="overloaded">Overloaded Queue (λ=15, μ=10)</option>
+              </select>
+            </div>
+            <div>
+              <label class="input-label" for="select-time-unit">Time Unit</label>
+              <select id="select-time-unit" class="select-control">
+                <option value="hours" selected>Hours (hrs)</option>
+                <option value="minutes">Minutes (mins)</option>
+                <option value="seconds">Seconds (secs)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Input 1: Arrival Rate (lambda) -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-lambda" class="input-label">
+                <span class="input-symbol">&lambda;</span> Arrival Rate
+              </label>
+              <span class="unit-rate-label">cust/hour</span>
+            </div>
+            <div class="input-control-wrap">
+              <input type="number" id="input-lambda" class="form-input" value="2" min="0.01" step="0.5">
+            </div>
+            <div class="slider-wrap">
+              <input type="range" id="slider-lambda" class="custom-range" min="0.1" max="20" step="0.1" value="2">
+            </div>
+            <div class="slider-ticks">
+              <span>0.1</span>
+              <span>10.0</span>
+              <span>20.0</span>
+            </div>
+          </div>
+
+          <!-- Input 2: Service Rate (mu) -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-mu" class="input-label">
+                <span class="input-symbol">&mu;</span> Service Rate
+              </label>
+              <span class="unit-rate-label">cust/hour</span>
+            </div>
+            <div class="input-control-wrap">
+              <input type="number" id="input-mu" class="form-input" value="4" min="0.01" step="0.5">
+            </div>
+            <div class="slider-wrap">
+              <input type="range" id="slider-mu" class="custom-range" min="0.1" max="20" step="0.1" value="4">
+            </div>
+            <div class="slider-ticks">
+              <span>0.1</span>
+              <span>10.0</span>
+              <span>20.0</span>
+            </div>
+          </div>
+
+          <!-- Real-Time Alerts & Validation Banners -->
+          <div id="status-alerts-container">
+            <!-- Dynamically injected via script.js -->
+          </div>
+
+          <!-- Quick Secondary Info -->
+          <div style="margin-top: 1.25rem; font-size: 0.8rem; color: var(--text-dim); display: flex; justify-content: space-between;">
+            <span>Avg. Inter-Arrival: <strong id="metric-arrival-time" style="color: var(--text-main);">0.5000 hrs</strong></span>
+            <span>Avg. Service: <strong id="metric-service-time" style="color: var(--text-main);">0.2500 hrs</strong></span>
+          </div>
+        </div>
+
+        <!-- Right Column: Interactive 3D Queue Stage (Three.js) -->
+        <div class="glass-card" id="simulation-section">
+          <div class="card-header-bar">
+            <h3 class="card-title">
+              <i data-lucide="box"></i> 3D Queue Environment
+            </h3>
+            <div class="sim-btn-group">
+              <button class="btn btn-sm btn-sim-view active" data-view="isometric">Isometric</button>
+              <button class="btn btn-sm btn-sim-view" data-view="top">Top-Down</button>
+              <button class="btn btn-sm btn-sim-view" data-view="counter">Counter</button>
+            </div>
+          </div>
+
+          <div class="canvas-3d-wrap">
+            <div id="canvas-3d-container"></div>
+
+            <!-- Heads-Up Display (HUD) -->
+            <div class="canvas-hud">
+              <div class="hud-panel">
+                <div class="hud-stat">
+                  <span class="hud-label">Server Status</span>
+                  <span id="hud-server-state" class="status-badge idle">IDLE</span>
+                </div>
+                <div class="hud-stat">
+                  <span class="hud-label">In Queue (Lq)</span>
+                  <span id="hud-queue-count" class="hud-val">0</span>
+                </div>
+                <div class="hud-stat">
+                  <span class="hud-label">In System (L)</span>
+                  <span id="hud-system-count" class="hud-val">0</span>
+                </div>
+                <div class="hud-stat">
+                  <span class="hud-label">Completed</span>
+                  <span id="hud-completed-count" class="hud-val">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulation Controls Bar -->
+          <div class="sim-controls-bar">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button id="btn-sim-playpause" class="btn btn-primary btn-sm">
+                <i data-lucide="pause"></i> <span>Pause</span>
+              </button>
+              <button id="btn-sim-reset" class="btn btn-secondary btn-sm" title="Clear customer entities and reset simulation clock">
+                <i data-lucide="rotate-ccw"></i> Reset 3D
+              </button>
+            </div>
+
+            <div style="display: flex; gap: 0.4rem; align-items: center;">
+              <span style="font-size: 0.75rem; color: var(--text-dim); margin-right: 0.25rem;">Speed:</span>
+              <button class="btn btn-sm btn-secondary btn-sim-speed" data-speed="0.5">0.5x</button>
+              <button class="btn btn-sm btn-secondary btn-sim-speed active" data-speed="1.0">1x</button>
+              <button class="btn btn-sm btn-secondary btn-sim-speed" data-speed="2.0">2x</button>
+              <button class="btn btn-sm btn-secondary btn-sim-speed" data-speed="4.0">4x</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Performance Measures Grid -->
+  <section class="container" id="metrics-section">
+    <div class="section-title-wrap">
+      <div>
+        <h3 class="section-title">Performance Measures</h3>
+        <p class="section-desc">Calculated steady-state metrics and Little's Law verification for the (M/M/1):(∞/FIFO) queue.</p>
+      </div>
+      <div id="check-littles-law-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <span id="check-littles-l"></span>
+        <span id="check-littles-lq"></span>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+
+      <!-- Metric 1: Utilisation Factor (rho) -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-name">Utilisation Factor</span>
+          <span class="metric-formula-tag">&rho; = &lambda; / &mu;</span>
+        </div>
+        <div class="metric-value-row">
+          <span id="metric-rho-value" class="metric-main-value">0.5000</span>
+          <span id="metric-rho-percent" class="metric-sub-value">50.0%</span>
+        </div>
+        <div class="metric-progress-bar">
+          <div id="metric-rho-bar" class="metric-progress-fill" style="width: 50%;"></div>
+        </div>
+        <div class="metric-footer">
+          <span>Traffic Intensity / Server Busy Fraction</span>
+          <span class="text-accent">Capacity Load</span>
+        </div>
+      </div>
+
+      <!-- Metric 2: Empty System Probability (P0) -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-name">Prob. System is Empty</span>
+          <span class="metric-formula-tag">P₀ = 1 - &rho;</span>
+        </div>
+        <div class="metric-value-row">
+          <span id="metric-p0-value" class="metric-main-value">0.5000</span>
+          <span id="metric-p0-percent" class="metric-sub-value">50.0% idle</span>
+        </div>
+        <div class="metric-progress-bar">
+          <div id="metric-p0-bar" class="metric-progress-fill" style="width: 50%; background: var(--accent-emerald);"></div>
+        </div>
+        <div class="metric-footer">
+          <span>Server Idle Probability</span>
+          <span class="badge-verified">Zero Customers</span>
+        </div>
+      </div>
+
+      <!-- Metric 3: Average Customers in System (L) -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-name">Avg. in System</span>
+          <span class="metric-formula-tag">L = &lambda; / (&mu; - &lambda;)</span>
+        </div>
+        <div class="metric-value-row">
+          <span id="metric-l-value" class="metric-main-value">1.0000</span>
+          <span id="metric-l-sub" class="metric-sub-value">≈ 1 customer</span>
+        </div>
+        <div class="metric-footer">
+          <span>Queue + Server Combined Count</span>
+          <span class="text-accent">L = &rho; / (1 - &rho;)</span>
+        </div>
+      </div>
+
+      <!-- Metric 4: Average Customers in Queue (Lq) -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-name">Avg. in Queue</span>
+          <span class="metric-formula-tag">Lq = &lambda;&sup2; / &mu;(&mu; - &lambda;)</span>
+        </div>
+        <div class="metric-value-row">
+          <span id="metric-lq-value" class="metric-main-value">0.5000</span>
+          <span id="metric-lq-sub" class="metric-sub-value">Waiting in FIFO line</span>
+        </div>
+        <div class="metric-footer">
+          <span>Excludes customer in service</span>
+          <span class="text-accent">Lq = L - &rho;</span>
+        </div>
+      </div>
+
+      <!-- Metric 5: Average Time in System (W) -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-name">Avg. Time in System</span>
+          <span class="metric-formula-tag">W = 1 / (&mu; - &lambda;)</span>
+        </div>
+        <div class="metric-value-row">
+          <span id="metric-w-value" class="metric-main-value">0.5000</span>
+          <span id="metric-w-formatted" class="metric-sub-value">30.0 mins</span>
+        </div>
+        <div class="metric-footer">
+          <span>Total residence time: Wait + Service</span>
+          <span class="text-accent">W = L / &lambda;</span>
+        </div>
+      </div>
+
+      <!-- Metric 6: Average Waiting Time in Queue (Wq) -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-name">Avg. Waiting Time in Queue</span>
+          <span class="metric-formula-tag">Wq = &lambda; / &mu;(&mu; - &lambda;)</span>
+        </div>
+        <div class="metric-value-row">
+          <span id="metric-wq-value" class="metric-main-value">0.2500</span>
+          <span id="metric-wq-formatted" class="metric-sub-value">15.0 mins</span>
+        </div>
+        <div class="metric-footer">
+          <span>Queue waiting duration only</span>
+          <span class="text-accent">Wq = W - 1/&mu;</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Visual Analytics & Charts Section -->
+  <section class="container" id="charts-section">
+    <div class="section-title-wrap">
+      <div>
+        <h3 class="section-title">Visual Analytics</h3>
+        <p class="section-desc">Theoretical probability distributions and sensitivity analysis of queue explosion.</p>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <!-- Chart 1: State Probability Distribution Pn -->
+      <div class="glass-card chart-card">
+        <div class="card-header-bar">
+          <h4 class="card-title"><i data-lucide="bar-chart-3"></i> State Probability Distribution P(N = n)</h4>
+          <span class="metric-formula-tag">Pₙ = (1 - &rho;)&rho;ⁿ</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Probability of finding exactly $n$ customers in the system at any random instant.
+        </p>
+        <div class="chart-container-wrap">
+          <canvas id="chart-distribution"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Congestion Hyperbola (Sensitivity) -->
+      <div class="glass-card chart-card">
+        <div class="card-header-bar">
+          <h4 class="card-title"><i data-lucide="trending-up"></i> Congestion Explosion Curve</h4>
+          <span class="metric-formula-tag">L vs &rho; as &rho; &rarr; 1</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Non-linear surge in customer buildup as utilization approaches 100%.
+        </p>
+        <div class="chart-container-wrap">
+          <canvas id="chart-sensitivity"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Test Cases Suite Section -->
+  <section class="container test-cases-section" id="testcases-section">
+    <div class="section-title-wrap">
+      <div>
+        <h3 class="section-title">Comprehensive Test Cases Suite</h3>
+        <p class="section-desc">At least 5 verified test cases covering normal, critical boundary, overloaded, and invalid-input scenarios.</p>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="btn-run-all-tests" class="btn btn-primary btn-sm">
+          <i data-lucide="play"></i> Run All Test Cases
+        </button>
+        <button id="btn-download-tests-csv" class="btn btn-secondary btn-sm">
+          <i data-lucide="download"></i> Download CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Batch Summary Banner -->
+    <div id="test-suite-summary-banner" style="display: none; margin-bottom: 1.25rem;"></div>
+
+    <div class="table-responsive glass-card" style="padding: 0;">
+      <table class="test-table">
+        <thead>
+          <tr>
+            <th style="width: 5%;">ID</th>
+            <th style="width: 25%;">Test Scenario</th>
+            <th style="width: 14%;">Inputs</th>
+            <th style="width: 24%;">Expected Output</th>
+            <th style="width: 20%;">Obtained Output</th>
+            <th style="width: 12%;">Status</th>
+            <th style="width: 10%;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="test-cases-table-body">
+          <!-- Injected via script.js -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- User Guide & Theoretical Foundations Section -->
+  <section class="container guide-section" id="guide-section">
+    <div class="section-title-wrap">
+      <div>
+        <h3 class="section-title">User Guide & Theory Documentation</h3>
+        <p class="section-desc">Complete manual explaining Kendall's notation, formulas, stability conditions, and operational steps.</p>
+      </div>
+    </div>
+
+    <div class="guide-grid">
+
+      <!-- Guide Card 1: What is (M/M/1):(∞/FIFO)? -->
+      <div class="glass-card guide-card">
+        <h4><i data-lucide="book-open"></i> Kendall's Notation Breakdown</h4>
+        <p>The standard notation <strong>(M/M/1):(∞/FIFO)</strong> describes a fundamental single-server queuing system characterized by:</p>
+        <ul style="list-style: disc; padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          <li><strong>M (First position - Arrival Process):</strong> Markovian / Poisson arrival process with rate $\lambda$. Inter-arrival times follow an exponential distribution $A(t) = 1 - e^{-\lambda t}$ with mean $1/\lambda$.</li>
+          <li><strong>M (Second position - Service Mechanism):</strong> Markovian / Exponential service times with parameter $\mu$. Mean service time is $1/\mu$.</li>
+          <li><strong>1 (Third position - Server Count):</strong> A single service counter or processor serves incoming customers one at a time.</li>
+          <li><strong>∞ (Fourth position - System Capacity):</strong> Infinite buffer / waiting room. No customers are turned away or balk due to a full queue.</li>
+          <li><strong>FIFO (Fifth position - Queue Discipline):</strong> First-In, First-Out. The customer who arrives first receives service first.</li>
+        </ul>
+        <div class="formula-display-box">
+          <strong>Memoryless Property:</strong> Both arrival and service events are memoryless:
+          $$P(X > s + t \mid X > s) = P(X > t)$$
+        </div>
+      </div>
+
+      <!-- Guide Card 2: Mathematical Formulas -->
+      <div class="glass-card guide-card">
+        <h4><i data-lucide="cpu"></i> Mathematical Formulas Reference</h4>
+        <p>All performance measures in this calculator are derived using continuous-time Markov chains (Birth-Death processes) in steady state:</p>
+        
+        <div class="formula-display-box">
+          <strong>1. Traffic Intensity / Utilisation Factor:</strong>
+          $$\rho = \frac{\lambda}{\mu}$$
+        </div>
+
+        <div class="formula-display-box">
+          <strong>2. Probability of Empty System:</strong>
+          $$P_0 = 1 - \rho = 1 - \frac{\lambda}{\mu}$$
+        </div>
+
+        <div class="formula-display-box">
+          <strong>3. Average Number in System and Queue:</strong>
+          $$L = \frac{\lambda}{\mu - \lambda} = \frac{\rho}{1 - \rho}, \quad L_q = \frac{\lambda^2}{\mu(\mu - \lambda)} = L - \rho$$
+        </div>
+
+        <div class="formula-display-box">
+          <strong>4. Average Waiting Times (Little's Law):</strong>
+          $$W = \frac{1}{\mu - \lambda} = \frac{L}{\lambda}, \quad W_q = \frac{\lambda}{\mu(\mu - \lambda)} = W - \frac{1}{\mu}$$
+        </div>
+      </div>
+
+      <!-- Guide Card 3: System Stability & Why λ ≥ μ Explodes -->
+      <div class="glass-card guide-card">
+        <h4><i data-lucide="alert-triangle"></i> Stability Condition ($\lambda < \mu$)</h4>
+        <p>For an $(M/M/1):(\infty/\text{FIFO})$ queue, a stationary steady-state distribution exists <strong>if and only if</strong>:</p>
+        <div class="formula-display-box" style="border-color: var(--accent-emerald);">
+          $$\rho = \frac{\lambda}{\mu} < 1 \iff \lambda < \mu$$
+        </div>
+        <p><strong>What happens when $\lambda \ge \mu$?</strong></p>
+        <p>
+          If $\lambda \ge \mu$, customers arrive at or faster than the maximum capacity of the server. 
+          Because random variations exist, even if $\lambda = \mu$, idle gaps cannot be "saved" for future surges. 
+          As time $t \to \infty$, the expected number of customers in the queue $L_q \to \infty$ and waiting time $W_q \to \infty$. 
+          The Markov chain is transient ($\lambda > \mu$) or null-recurrent ($\lambda = \mu$), and the sum of state probabilities $\sum_{n=0}^{\infty} P_n$ diverges.
+        </p>
+      </div>
+
+      <!-- Guide Card 4: Step-by-Step User Instructions -->
+      <div class="glass-card guide-card">
+        <h4><i data-lucide="check-square"></i> How to Use the Calculator</h4>
+        <ol class="step-list">
+          <li class="step-item">
+            <strong>Enter Arrival & Service Rates</strong>
+            Specify $\lambda$ (arrival rate) and $\mu$ (service rate) using the input boxes or fine-tuning sliders. Ensure both values are strictly positive real numbers ($> 0$).
+          </li>
+          <li class="step-item">
+            <strong>Choose Units or Presets</strong>
+            Switch time units (Hours, Minutes, Seconds) or click any preset (e.g., Bank Teller, Web Server) to load realistic domain figures.
+          </li>
+          <li class="step-item">
+            <strong>Observe 3D Queue Simulation</strong>
+            Watch the 3D stage simulate actual arrivals and departures in real-time. Use orbit controls (click and drag) to inspect the queue from any angle.
+          </li>
+          <li class="step-item">
+            <strong>Review Metrics & Little's Law</strong>
+            Analyze $\rho, P_0, L, L_q, W, W_q$. Check the Little's Law badges confirming $L = \lambda W$ and $L_q = \lambda W_q$.
+          </li>
+          <li class="step-item">
+            <strong>Run & Verify Test Cases</strong>
+            Scroll to the Test Cases table. Click "Run All Test Cases" or test individual rows with "Load & Run" to confirm mathematical accuracy.
+          </li>
+        </ol>
+      </div>
+
+    </div>
+
+    <!-- GitHub Pages Hosting Guide Box -->
+    <div class="glass-card" style="margin-top: 1.5rem; border-color: rgba(168, 85, 247, 0.4);">
+      <div class="card-header-bar">
+        <h4 class="card-title"><i data-lucide="github"></i> How to Host on GitHub Pages (Free & Instant)</h4>
+        <span class="metric-formula-tag">Deployment Guide</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+        <div>
+          <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Step 1: Create Repository</strong>
+          Create a new public repository on GitHub (e.g., <code>queue-calculator-mm1</code>).
+        </div>
+        <div>
+          <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Step 2: Push Files</strong>
+          Commit and push all files (<code>index.html</code>, <code>style.css</code>, <code>script.js</code>, <code>simulation3d.js</code>, <code>test_cases.json</code>, <code>README.md</code>) to the <code>main</code> branch.
+        </div>
+        <div>
+          <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Step 3: Enable Pages</strong>
+          In your GitHub repo, go to <strong>Settings &rarr; Pages</strong>. Under <em>Build and deployment</em>, select Source: <strong>Deploy from a branch</strong> &rarr; Branch: <strong>main</strong>, folder: <strong>/ (root)</strong> &rarr; Click <strong>Save</strong>.
+        </div>
+        <div>
+          <strong style="color: var(--text-main); display: block; margin-bottom: 0.25rem;">Step 4: Live Link</strong>
+          Your site will be live in ~30 seconds at: <code>https://&lt;your-username&gt;.github.io/&lt;repo-name&gt;/</code>.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>
+        <strong>QueueFlow 3D</strong> &mdash; Single Server $(M/M/1):(\infty/\text{FIFO})$ Queuing Simulator & Calculator
+      </p>
+      <p style="margin-top: 0.35rem; font-size: 0.8rem; color: var(--text-dim);">
+        Designed for academic mathematical rigor, stochastic queuing analysis, and interactive 3D pedagogy.
+      </p>
+      <div class="footer-links">
+        <a href="#calculator-section">Calculator</a>
+        <a href="#simulation-section">3D Stage</a>
+        <a href="#metrics-section">Performance Measures</a>
+        <a href="#testcases-section">Test Cases</a>
+        <a href="#guide-section">Documentation</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- KaTeX core & auto-render -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Application Logic -->
+  <script src="simulation3d.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

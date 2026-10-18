@@ -1,0 +1,128 @@
+[
+  {
+    "id": 1,
+    "title": "Normal Light Load",
+    "description": "Standard low-utilization scenario where the server easily manages arrival flow.",
+    "category": "normal",
+    "lambda": 2,
+    "mu": 4,
+    "expected": {
+      "status": "stable",
+      "rho": 0.5000,
+      "p0": 0.5000,
+      "L": 1.0000,
+      "Lq": 0.5000,
+      "W": 0.5000,
+      "Wq": 0.2500
+    },
+    "notes": "Utilization is 50%. On average, 1 customer in system (0.5 in queue, 0.5 at server)."
+  },
+  {
+    "id": 2,
+    "title": "Moderate Load",
+    "description": "Realistic everyday operating scenario with moderate customer presence.",
+    "category": "normal",
+    "lambda": 3,
+    "mu": 5,
+    "expected": {
+      "status": "stable",
+      "rho": 0.6000,
+      "p0": 0.4000,
+      "L": 1.5000,
+      "Lq": 0.9000,
+      "W": 0.5000,
+      "Wq": 0.3000
+    },
+    "notes": "Utilization is 60%. Average time in system is 0.50 hours (30 min), queue wait is 0.30 hours (18 min)."
+  },
+  {
+    "id": 3,
+    "title": "High Congestion (Near Peak)",
+    "description": "Peak hour scenario testing high utilization and non-linear queue buildup.",
+    "category": "normal",
+    "lambda": 8,
+    "mu": 10,
+    "expected": {
+      "status": "stable",
+      "rho": 0.8000,
+      "p0": 0.2000,
+      "L": 4.0000,
+      "Lq": 3.2000,
+      "W": 0.5000,
+      "Wq": 0.4000
+    },
+    "notes": "Utilization is 80%. System empty only 20% of the time. Average queue length increases to 3.2 customers."
+  },
+  {
+    "id": 4,
+    "title": "Fractional / Decimal Rates",
+    "description": "Low-frequency arrival and service rates validating decimal input precision.",
+    "category": "normal",
+    "lambda": 0.5,
+    "mu": 1.5,
+    "expected": {
+      "status": "stable",
+      "rho": 0.3333,
+      "p0": 0.6667,
+      "L": 0.5000,
+      "Lq": 0.1667,
+      "W": 1.0000,
+      "Wq": 0.3333
+    },
+    "notes": "Arrival every 2 hours, service takes 40 minutes (2/3 hr). System remains clear 66.7% of time."
+  },
+  {
+    "id": 5,
+    "title": "Critical Boundary (λ = μ)",
+    "description": "Edge case where arrival rate equals service capacity, rendering the system unstable.",
+    "category": "unstable",
+    "lambda": 5,
+    "mu": 5,
+    "expected": {
+      "status": "unstable",
+      "rho": 1.0000,
+      "warning": "System is unstable (λ ≥ μ). Utilization reaches 100%, queue length grows infinitely without equilibrium."
+    },
+    "notes": "Queue size variance is infinite; no steady-state probability distribution exists."
+  },
+  {
+    "id": 6,
+    "title": "Severe Overload (λ > μ)",
+    "description": "Arrival rate strictly surpasses service rate, causing permanent queue buildup.",
+    "category": "unstable",
+    "lambda": 12,
+    "mu": 8,
+    "expected": {
+      "status": "unstable",
+      "rho": 1.5000,
+      "warning": "System is severely overloaded (λ > μ, ρ = 1.50). Service capacity cannot cope with incoming flow."
+    },
+    "notes": "Deterministic queue growth at rate of (12 - 8) = 4 customers per time unit."
+  },
+  {
+    "id": 7,
+    "title": "Invalid Input: Negative Arrival Rate",
+    "description": "Validation test for strictly positive parameter requirements (λ ≤ 0).",
+    "category": "invalid",
+    "lambda": -2,
+    "mu": 5,
+    "expected": {
+      "status": "invalid",
+      "error": "Arrival rate (λ) must be a positive real number greater than 0."
+    },
+    "notes": "Arrival rate represents physical arrival frequency and cannot be negative or zero."
+  },
+  {
+    "id": 8,
+    "title": "Invalid Input: Zero Service Rate",
+    "description": "Validation test for division by zero and non-positive service capacity (μ ≤ 0).",
+    "category": "invalid",
+    "lambda": 3,
+    "mu": 0,
+    "expected": {
+      "status": "invalid",
+      "error": "Service rate (μ) must be a positive real number greater than 0."
+    },
+    "notes": "Zero service rate implies dead service channel with infinite backlog."
+  }
+]
