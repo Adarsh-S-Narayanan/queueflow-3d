@@ -1,10 +1,11 @@
 # QueueFlow 3D: Queuing Theory Platform & Calculators
 ## Model I: $(M/M/1):(\infty/\text{FIFO})$ & Model II: $(M/M/s):(\infty/\text{FIFO})$
 
-A modern, interactive 3D and multi-server Queuing Theory Calculator, Simulator, and Analytics Dashboard designed for both the single-server **$(M/M/1):(\infty/\text{FIFO})$** and multi-server **$(M/M/s):(\infty/\text{FIFO})$** queuing models. Built with pure web standards (HTML5, CSS3, JavaScript, Three.js, Chart.js, and KaTeX) and ready to host directly on **GitHub Pages** with zero build configuration.
+A modern, interactive 3D and multi-server Queuing Theory Platform, Calculator, Simulator, and Analytics Dashboard designed for both the single-server **$(M/M/1):(\infty/\text{FIFO})$** and multi-server **$(M/M/s):(\infty/\text{FIFO})$** queuing models. Built with pure web standards (HTML5, CSS3, JavaScript, Three.js, Chart.js, and KaTeX) and ready to host directly on **GitHub Pages** with zero build configuration.
 
 - **Single-Server Page**: [`index.html`](file:///d:/code/class/maths_assingment1/index.html)
 - **Multi-Server Page**: [`mms.html`](file:///d:/code/class/maths_assingment1/mms.html)
+- **Dedicated M/M/s User Guide & Documentation**: [`README_MMS.md`](file:///d:/code/class/maths_assingment1/README_MMS.md)
 - **Model I Engine**: `Engine/Model I：(M／M／1)：(∞／FIFO)/`
 - **Model II Engine**: `Engine/(M／M／s)：(ꝏ／FIFO)/`
 
@@ -12,105 +13,110 @@ A modern, interactive 3D and multi-server Queuing Theory Calculator, Simulator, 
 
 ## 🌟 Key Features
 
-1. **Complete $(M/M/1):(\infty/\text{FIFO})$ Calculation Suite**:
-   - Automatically computes all primary measures:
-     - **Utilisation Factor ($\rho = \lambda / \mu$)**
-     - **Probability of Empty System ($P_0 = 1 - \rho$)**
-     - **Average Customers in System ($L_s = \frac{\lambda}{\mu - \lambda} = \frac{\rho}{1 - \rho}$)**
-     - **Average Customers in Queue ($L_q = \frac{\lambda^2}{\mu(\mu - \lambda)} = \frac{\rho^2}{1 - \rho}$)**
-     - **Average Customers in Waiting Line ($L_w = \frac{\mu}{\mu - \lambda} = \frac{1}{1 - \rho}$)**
-     - **Average Time Spent in System ($W_s = \frac{1}{\mu - \lambda} = \frac{L_s}{\lambda}$)**
-     - **Average Waiting Time in Queue ($W_q = \frac{\lambda}{\mu(\mu - \lambda)} = \frac{L_q}{\lambda}$)**
-   - Automatic unit conversion (Hours, Minutes, Seconds) with human-readable secondary formatting (e.g., $0.5\text{ hrs} \to 30.0\text{ mins}$).
-   - Real-time **Little's Law Verification Badges** ($L_s = \lambda W_s$, $L_q = \lambda W_q$, $W_s = W_q + \frac{1}{\mu}$, $L_s = L_q + \frac{\lambda}{\mu}$) confirming exact mathematical consistency.
+### 1. Complete $(M/M/1):(\infty/\text{FIFO})$ Calculation Suite
+- Automatically computes all primary measures:
+  - **Utilisation Factor ($\rho = \lambda / \mu$)**
+  - **Probability of Empty System ($P_0 = 1 - \rho$)**
+  - **Average Customers in System ($L_s = \frac{\lambda}{\mu - \lambda} = \frac{\rho}{1 - \rho}$)**
+  - **Average Customers in Queue ($L_q = \frac{\lambda^2}{\mu(\mu - \lambda)} = \frac{\rho^2}{1 - \rho}$)**
+  - **Average Customers in Waiting Line ($L_w = \frac{\mu}{\mu - \lambda} = \frac{1}{1 - \rho}$)**
+  - **Average Time Spent in System ($W_s = \frac{1}{\mu - \lambda} = \frac{L_s}{\lambda}$)**
+  - **Average Waiting Time in Queue ($W_q = \frac{\lambda}{\mu(\mu - \lambda)} = \frac{L_q}{\lambda}$)**
+- Dynamic unit conversions (Hours, Minutes, Seconds) with human-readable secondary formatting.
+- Real-time **Little's Law Verification Badges** ($L_s = \lambda W_s$, $L_q = \lambda W_q$, $W_s = W_q + \frac{1}{\mu}$, $L_s = L_q + \frac{\lambda}{\mu}$).
+- Interactive 3D single-server stage with animated customers, server beacon, and orbit controls.
 
-2. **Isolated Mathematical Engine Architecture**:
-   - As requested, all mathematical equations, probability distributions, stability checks, and Little's formulas are completely isolated into dedicated folders:
-     `Engine/Model I：(M／M／1)：(∞／FIFO)/` and `Engine/(M／M／s)：(ꝏ／FIFO)/`
-   - Contains:
-     - `mm1_engine.js`: Pure mathematical engine (UMD module, browser global `window.MM1Engine`, Node.js / ES module compatible)
-     - `mm1_engine.py`: Pure Python 3 mathematical engine with typing and verification methods
-     - `test_engine.py`: Standalone unit tests executing all equations from Page 6
-     - `README.md`: Formal mathematical derivation and engine API reference
+### 2. Complete $(M/M/s):(\infty/\text{FIFO})$ Multi-Server Calculation Suite
+- Automatically computes all multi-server metrics:
+  - **Offered Load ($r = \lambda / \mu$ in Erlangs)**
+  - **Server Utilisation Factor ($\rho = \frac{\lambda}{s\mu} = \frac{r}{s}$)**
+  - **Probability of Empty System ($P_0$)** via finite sum + geometric tail.
+  - **Probability of Waiting ($P(\text{wait}) = C(s, r)$ - Erlang's C Formula)**.
+  - **Average Number in Queue ($L_q$)** and **Average Number in System ($L_s = L_q + r$)**.
+  - **Average Waiting Time in Queue ($W_q = L_q / \lambda$)** and **Average Time in System ($W_s = W_q + 1/\mu$)**.
+  - **Average Non-Empty Queue Length ($L_w = \frac{\rho}{1 - \rho}$)**.
+- **Dynamic 3D Multi-Server Stage**:
+  - Automatically arranges $s$ parallel server counter booths with interactive screens and receptionist clerk avatars.
+  - **Floor Line Architecture**: Stanchion arrival line, 9 waiting slot rings, transfer cross-aisle runner ($X = -0.55$), and dedicated green departure corridor ($X = 0.55$) with directional decals leading to the Exit Arch Portal.
+  - Dynamic status beacons: **Emerald** (Idle), **Amber** (Busy), **Rose** (Overloaded).
+- Parallel Server Booth Status Grid: Real-time cards showing each counter's operational state, cumulative served count, and live service progress bar.
 
-3. **Interactive 2D Topology Illustration & 3D WebGL Simulation**:
-   - **System Topology Illustration**: Clean SVG diagram mapping Poisson arrivals ($\lambda$), infinite FIFO buffer ($L_q, W_q$), single server station ($\mu, \rho, P_0$), and departure flow ($L_s, W_s$) with live metric updates.
-   - **Interactive 3D Stage (Three.js)**: Realistic 3D visualization of a service counter, arrival gate, departure corridor, and physical FIFO queue lane with animated customer entities.
-   - Dynamic 3D server light feedback: **Green** (Idle), **Cyan** (Serving), **Red** (Overloaded / Bottlenecked).
-   - Orbit controls (rotate, zoom, pan) with 3 camera perspectives (Isometric, Top-Down, Counter Close-up).
-   - Play, Pause, Reset, and Simulation Speed toggles ($0.5\times, 1\times, 2\times, 4\times$).
+### 3. Isolated Mathematical Engine Architecture
+- As required, all mathematical equations, probability distributions, stability checks, and Little's formulas are completely isolated into dedicated folders:
+  - `Engine/Model I：(M／M／1)：(∞／FIFO)/`
+  - `Engine/(M／M／s)：(ꝏ／FIFO)/`
+- Each directory contains:
+  - Pure JavaScript Engine (UMD module, browser global, Node.js compatible)
+  - Pure Python 3 Engine with typing and mathematical docstrings
+  - Self-contained Python unit tests executing all equations
+  - Mathematical derivation and API reference README
 
-4. **Study Notes Page 6 Advanced Formulas Panel**:
-   - **State Distribution**: $P(n\text{ customers}) = \rho^n(1 - \rho)$ with interactive $n$ stepper.
-   - **Queue Thresholds**: $P(N \ge k) = \rho^k$ and $P(N > k) = \rho^{k+1}$ with interactive $k$ stepper.
-   - **Waiting Time Exceedance**: $P(T_s > t) = e^{-(\mu - \lambda)t}$ and $P(T_q > t) = \rho e^{-(\mu - \lambda)t}$ with interactive time $t$ input.
-   - **Little's Law Matrix**: Live 4-card matrix displaying LHS, RHS, and verified badges.
+### 4. Robust Input Validation & Instability Detection
+- Validates strictly positive arrival rate ($\lambda > 0$) and service rate ($\mu > 0$).
+- Validates integer server count ($s \ge 1$).
+- **Critical Boundary Warning ($\lambda = \mu$ for M/M/1, $\lambda = s\mu$ for M/M/s)**: Alerts the user that steady-state equilibrium fails and queue variance diverges to infinity.
+- **Severe Overload Warning ($\lambda > \mu$ for M/M/1, $\lambda > s\mu$ for M/M/s)**: Issues immediate warnings explaining continuous backlog accumulation and buffer explosion.
 
-5. **Robust Input Validation & Instability Detection**:
-   - Validates that arrival rate ($\lambda$) and service rate ($\mu$) are strictly positive real numbers ($> 0$).
-   - Flags non-numeric, empty, or negative inputs with clear descriptive error messages.
-   - Detects the critical stability boundary ($\lambda = \mu$) and severe overload ($\lambda > \mu$), issuing immediate high-visibility warnings explaining why the queue explodes infinitely ($L \to \infty, W \to \infty$) and steady-state equilibrium fails.
-
-6. **Comprehensive Automated Test Suite (8 Test Cases)**:
-   - Exceeds the 5 required cases with **8 comprehensive test cases** covering normal light load, moderate load, heavy peak congestion, fractional rates, critical boundary, severe overload, negative arrival rate, and zero service rate.
-   - Includes interactive **"Load & Run"** buttons and a **"Run All Test Cases"** batch execution engine.
-   - One-click CSV export of test case records.
-   - Python CI test runner (`verify_suite.py`) testing against `test_cases.json` with 100% pass rate.
-
-7. **GitHub Pages Ready & Zero-Config Hosting**:
-   - Pure client-side static site; requires no Node.js, no bundler, and no backend. Deploy in 30 seconds.
-   - Includes `.nojekyll` to ensure GitHub Pages serves raw files and Unicode paths without Jekyll interception.
+### 5. Automated Batch Verification Suites
+- Includes two automated Python verification suites testing against JSON benchmark specifications:
+  - `verify_suite.py` testing `test_cases.json` (8/8 M/M/1 cases passing)
+  - `verify_mms_suite.py` testing `mms_test_cases.json` (8/8 M/M/s cases passing)
+- In-browser interactive test suite runners with "Load & Run", "Run All Test Cases", and CSV download.
 
 ---
 
 ## 📐 Mathematical Foundations
 
-### 1. Model Definition: $(M/M/1):(\infty/\text{FIFO})$
-Following Kendall's notation $(A / B / c) : (K / D)$:
-- **$A = M$ (Markovian Arrival)**: Inter-arrival times are independent and identically distributed (i.i.d.) exponential random variables with rate $\lambda$. Arrivals follow a Poisson process:
-  $$P(k \text{ arrivals in time } t) = \frac{(\lambda t)^k e^{-\lambda t}}{k!}$$
-- **$B = M$ (Markovian Service)**: Service durations are i.i.d. exponential random variables with rate $\mu$ (mean service time $= 1/\mu$).
-- **$c = 1$ (Single Server)**: Only one service channel operates.
-- **$K = \infty$ (Infinite Capacity)**: The queue buffer has infinite waiting capacity; no customer balks or is blocked.
-- **$D = \text{FIFO}$ (First-In, First-Out)**: Customers are served strictly in order of their arrival.
+### Model I: $(M/M/1):(\infty/\text{FIFO})$
 
-### 2. Governing Equations (Linear Algebra & Queuing Theory Notes, Page 6)
+Following Kendall's notation $(A / B / c) : (K / D)$:
+- $A = M$ (Poisson arrivals at rate $\lambda$), $B = M$ (exponential service at rate $\mu$), $c = 1$ (single server), $K = \infty$ (infinite buffer), $D = \text{FIFO}$.
 
 | Performance Measure | Symbol | Formula | Notes / Relation |
 | :--- | :---: | :---: | :---: |
 | **Utilisation Factor** | $\rho$ | $\rho = \frac{\lambda}{\mu}$ | Fraction of time server is busy |
-| **Probability System is Empty** | $P_0$ | $P(\text{system empty}) = 1 - \rho$ | Server idle probability |
-| **Probability of $n$ Customers** | $P_n$ | $P(n\text{ customers}) = \rho^n(1 - \rho)$ | Geometric state distribution |
-| **Average Customers in System** | $L_s$ | $L_s = \frac{\lambda}{\mu - \lambda}$ | $L_s = \frac{\rho}{1 - \rho} = L_q + \rho$ |
-| **Average Customers in Queue** | $L_q$ | $L_q = \frac{\lambda^2}{\mu(\mu - \lambda)}$ | $L_q = \frac{\rho^2}{1 - \rho} = L_s - \rho$ |
-| **Average Customers in Waiting Line** | $L_w$ | $L_w = \frac{\mu}{\mu - \lambda}$ | Non-empty queue mean: $\frac{1}{1 - \rho}$ |
-| **Average Time in System** | $W_s$ | $W_s = \frac{1}{\mu - \lambda}$ | $W_s = \frac{L_s}{\lambda} = W_q + \frac{1}{\mu}$ |
-| **Average Waiting Time in Queue** | $W_q$ | $W_q = \frac{\lambda}{\mu(\mu - \lambda)}$ | $W_q = \frac{L_q}{\lambda} = W_s - \frac{1}{\mu}$ |
-| **At Least $k$ Customers in System** | $P(N \ge k)$ | $P(N \ge k) = \rho^k$ | Tail queue probability |
-| **More Than $k$ Customers in System** | $P(N > k)$ | $P(N > k) = \rho^{k+1}$ | Strict tail threshold |
-| **System Time Exceeding $t$** | $P(T_s > t)$ | $P(T_s > t) = e^{-(\mu - \lambda)t}$ | Exponential survival function |
-| **Queue Time Exceeding $t$** | $P(T_q > t)$ | $P(T_q > t) = \rho e^{-(\mu - \lambda)t}$ | Wait exceedance probability |
+| **Probability System is Empty** | $P_0$ | $P_0 = 1 - \rho$ | Server idle probability |
+| **Probability of $n$ Customers** | $P_n$ | $P_n = \rho^n(1 - \rho)$ | Geometric state distribution |
+| **Average Customers in System** | $L_s$ | $L_s = \frac{\lambda}{\mu - \lambda} = \frac{\rho}{1 - \rho}$ | $L_s = L_q + \rho$ |
+| **Average Customers in Queue** | $L_q$ | $L_q = \frac{\lambda^2}{\mu(\mu - \lambda)} = \frac{\rho^2}{1 - \rho}$ | $L_q = L_s - \rho$ |
+| **Average in Waiting Line (Non-empty)** | $L_w$ | $L_w = \frac{\mu}{\mu - \lambda} = \frac{1}{1 - \rho}$ | Conditional queue mean |
+| **Average Time in System** | $W_s$ | $W_s = \frac{1}{\mu - \lambda} = \frac{L_s}{\lambda}$ | $W_s = W_q + \frac{1}{\mu}$ |
+| **Average Waiting Time in Queue** | $W_q$ | $W_q = \frac{\lambda}{\mu(\mu - \lambda)} = \frac{L_q}{\lambda}$ | $W_q = W_s - \frac{1}{\mu}$ |
 
-### 3. Little's Formulas
-1. $L_s = \lambda W_s$
-2. $L_q = \lambda W_q$
-3. $W_s = W_q + \frac{1}{\mu}$
-4. $L_s = L_q + \frac{\lambda}{\mu} \quad (L_s = L_q + \rho)$
+- **Stability Condition**: $\lambda < \mu$ ($\rho < 1.0$). If $\lambda \ge \mu$, the queue explodes infinitely ($L \to \infty, W \to \infty$).
 
-### 4. Stability Condition ($\lambda < \mu$)
-For a stationary distribution to exist, the Markov birth-death process must be **positive recurrent**:
-$$\sum_{n=0}^{\infty} P_n = 1 \implies P_0 \sum_{n=0}^{\infty} \rho^n = 1$$
-The infinite geometric series $\sum_{n=0}^{\infty} \rho^n$ converges if and only if:
-$$\rho < 1 \iff \lambda < \mu$$
+---
 
-- **When $\lambda = \mu$ ($\rho = 1$)**: The system is null-recurrent. Variance of queue length grows with time $t$. Steady-state does not exist; average queue size drifts to infinity.
-- **When $\lambda > \mu$ ($\rho > 1$)**: The system is transient. Arrivals exceed departures; queue backlog grows deterministically at rate $(\lambda - \mu)$ customers per unit time. $L \to \infty$ and $W \to \infty$.
+### Model II: $(M/M/s):(\infty/\text{FIFO})$
+
+Following Kendall's notation:
+- $c = s$ parallel identical servers fed by a single shared FIFO queue.
+- Total processing capacity of the server pool is $s\mu$.
+
+| Performance Measure | Symbol | Formula | Notes / Relation |
+| :--- | :---: | :---: | :---: |
+| **Offered Load** | $r$ | $r = \frac{\lambda}{\mu}$ | Traffic load in Erlangs |
+| **Server Utilisation Factor** | $\rho$ | $\rho = \frac{\lambda}{s\mu} = \frac{r}{s}$ | Mean load per server |
+| **Probability System is Empty** | $P_0$ | $P_0 = \left[ \sum_{n=0}^{s-1} \frac{r^n}{n!} + \frac{r^s}{s!(1 - \rho)} \right]^{-1}$ | Normalization condition |
+| **Probability of Waiting (Erlang C)** | $P(\text{wait})$ | $C(s, r) = \frac{r^s}{s!(1 - \rho)} P_0$ | PASTA: Probability all $s$ servers busy |
+| **Average Customers in Queue** | $L_q$ | $L_q = \frac{P(\text{wait}) \cdot \rho}{1 - \rho} = \frac{r^s \rho}{s!(1 - \rho)^2} P_0$ | Expected waiting backlog |
+| **Average Customers in System** | $L_s$ | $L_s = L_q + \frac{\lambda}{\mu} = L_q + r$ | Total customers in facility |
+| **Average Waiting Time in Queue** | $W_q$ | $W_q = \frac{L_q}{\lambda} = \frac{P(\text{wait})}{s\mu - \lambda}$ | By Little's Law ($L_q = \lambda W_q$) |
+| **Average Time in System** | $W_s$ | $W_s = W_q + \frac{1}{\mu} = \frac{L_s}{\lambda}$ | By Little's Law ($L_s = \lambda W_s$) |
+| **Average in Line (Non-empty)** | $L_w$ | $L_w = \frac{L_q}{P(\text{wait})} = \frac{\rho}{1 - \rho}$ | Conditional queue mean |
+
+- **State Distribution ($P_n$)**:
+  $$P_n = \begin{cases}
+  \frac{r^n}{n!} P_0 & \text{for } 0 \le n \le s \\
+  \frac{r^s}{s!} \rho^{n-s} P_0 & \text{for } n > s
+  \end{cases}$$
+- **Stability Condition**: $\lambda < s\mu$ ($\rho < 1.0$). If $\lambda \ge s\mu$, arrivals outpace or saturate the combined capacity of all $s$ servers, causing infinite backlog accumulation.
 
 ---
 
 ## 🧪 Comprehensive Test Cases Suite
 
-The application includes 8 thoroughly verified test cases (exceeding the required 5). Below is the complete test documentation:
+### 1. Model I: $(M/M/1):(\infty/\text{FIFO})$ Test Cases
 
 | ID | Category | Scenario Description | Inputs | Expected Output | Live Calculated Output | Status |
 |:---:|:---:|:---|:---|:---|:---|:---:|
@@ -125,42 +131,55 @@ The application includes 8 thoroughly verified test cases (exceeding the require
 
 ---
 
+### 2. Model II: $(M/M/s):(\infty/\text{FIFO})$ Test Cases
+
+| ID | Category | Scenario Description | Inputs | Expected Analytical Values | Obtained Live Output | Status |
+|:---:|:---:|:---|:---|:---|:---|:---:|
+| **1** | Normal | **Standard Balanced 2-Server Queue**<br>$s=2$ counters handling moderate flow | $\lambda = 3.0$<br>$\mu = 2.0$<br>$s = 2$ | $\rho = 0.7500$<br>$P_0 = 0.1429$<br>$P(\text{wait}) = 0.6429$<br>$L_q = 1.9286$<br>$L_s = 3.4286$<br>$W_q = 0.6429\text{ hr}$ ($38.6\text{ min}$)<br>$W_s = 1.1429\text{ hr}$ ($68.6\text{ min}$)<br>$L_w = 3.0000$ | $\rho = 0.7500$<br>$P_0 = 0.1429$<br>$P(\text{wait}) = 0.6429$<br>$L_q = 1.9286$<br>$L_s = 3.4286$<br>$W_q = 0.6429$<br>$W_s = 1.1429$<br>$L_w = 3.0000$ | **PASSED** ✅ |
+| **2** | Normal | **High-Efficiency 3-Server Center**<br>$s=3$ servers at 66.7% load | $\lambda = 4.0$<br>$\mu = 2.0$<br>$s = 3$ | $\rho = 0.6667$<br>$P_0 = 0.1111$<br>$P(\text{wait}) = 0.4444$<br>$L_q = 0.8889$<br>$L_s = 2.8889$<br>$W_q = 0.2222\text{ hr}$ ($13.3\text{ min}$)<br>$W_s = 0.7222\text{ hr}$ ($43.3\text{ min}$)<br>$L_w = 2.0000$ | $\rho = 0.6667$<br>$P_0 = 0.1111$<br>$P(\text{wait}) = 0.4444$<br>$L_q = 0.8889$<br>$L_s = 2.8889$<br>$W_q = 0.2222$<br>$W_s = 0.7222$<br>$L_w = 2.0000$ | **PASSED** ✅ |
+| **3** | Normal | **Single-Server Equivalence ($s=1$)**<br>Reduces precisely to $M/M/1$ | $\lambda = 2.0$<br>$\mu = 4.0$<br>$s = 1$ | $\rho = 0.5000$<br>$P_0 = 0.5000$<br>$P(\text{wait}) = 0.5000$<br>$L_q = 0.5000$<br>$L_s = 1.0000$<br>$W_q = 0.2500\text{ hr}$ ($15.0\text{ min}$)<br>$W_s = 0.5000\text{ hr}$ ($30.0\text{ min}$)<br>$L_w = 1.0000$ | $\rho = 0.5000$<br>$P_0 = 0.5000$<br>$P(\text{wait}) = 0.5000$<br>$L_q = 0.5000$<br>$L_s = 1.0000$<br>$W_q = 0.2500$<br>$W_s = 0.5000$<br>$L_w = 1.0000$ | **PASSED** ✅ |
+| **4** | Normal | **5-Server Enterprise Pool**<br>Large parallel pool under heavy traffic | $\lambda = 16.0$<br>$\mu = 4.0$<br>$s = 5$ | $\rho = 0.8000$<br>$P_0 = 0.0130$<br>$P(\text{wait}) = 0.5541$<br>$L_q = 2.2165$<br>$L_s = 6.2165$<br>$W_q = 0.1385\text{ hr}$ ($8.3\text{ min}$)<br>$W_s = 0.3885\text{ hr}$ ($23.3\text{ min}$)<br>$L_w = 4.0000$ | $\rho = 0.8000$<br>$P_0 = 0.0130$<br>$P(\text{wait}) = 0.5541$<br>$L_q = 2.2165$<br>$L_s = 6.2165$<br>$W_q = 0.1385$<br>$W_s = 0.3885$<br>$L_w = 4.0000$ | **PASSED** ✅ |
+| **5** | Unstable | **Critical Boundary ($\lambda = s\mu$)**<br>Arrival rate equals total capacity | $\lambda = 4.0$<br>$\mu = 2.0$<br>$s = 2$ | $\rho = 1.0000$<br>Warning: System unstable ($L_q \to \infty$) | System Unstable: $\rho = 1.0000 \ge 1.00$, Critical boundary detected | **PASSED** ✅ |
+| **6** | Unstable | **Severe Overload Surge ($\lambda > s\mu$)**<br>Demand exceeds pool capacity ($20 > 16$) | $\lambda = 20.0$<br>$\mu = 4.0$<br>$s = 4$ | $\rho = 1.2500$<br>Warning: Overloaded ($L_q \to \infty$) | Severe Overload Warning: $\rho = 1.2500 \ge 1.00$, Backlog explodes infinitely | **PASSED** ✅ |
+| **7** | Invalid | **Negative Arrival Rate**<br>Non-physical negative frequency | $\lambda = -2.0$<br>$\mu = 3.0$<br>$s = 2$ | Validation Error: $\lambda$ must be $> 0$ | Error: Arrival rate ($\lambda$) must be strictly greater than zero (> 0). | **PASSED** ✅ |
+| **8** | Invalid | **Invalid Server Count ($s = 0$)**<br>Zero operational service counters | $\lambda = 4.0$<br>$\mu = 2.0$<br>$s = 0$ | Validation Error: $s$ must be $\ge 1$ | Error: Number of servers ($s$) must be a positive integer ($s \ge 1$). | **PASSED** ✅ |
+
+---
+
 ## 📖 User Guide
 
-### 1. Launching the Calculator
-- **Direct Browser Access**: Simply double-click `index.html` or open it in any modern browser (Chrome, Edge, Firefox, Safari).
-- **Local Server (Optional)**:
+### 1. Launching the Platform
+- **Single-Server $(M/M/1)$**: Open [`index.html`](file:///d:/code/class/maths_assingment1/index.html) in your browser.
+- **Multi-Server $(M/M/s)$**: Open [`mms.html`](file:///d:/code/class/maths_assingment1/mms.html) in your browser.
+- Both pages feature a top **Model Switcher** (`(M/M/1)` $\leftrightarrow$ `(M/M/s)`) allowing seamless navigation.
+- Or start a local server:
   ```bash
   python -m http.server 8000
   ```
   Then navigate to `http://localhost:8000`.
 
-### 2. Operating the Calculator
+### 2. Operating the Calculators
 1. **Enter Parameters**:
-   - In the **Input Parameters** card, enter values for:
-     - **$\lambda$ (Arrival Rate)**: Number of arriving customers per unit time.
-     - **$\mu$ (Service Rate)**: Number of customers the server can process per unit time.
-   - Alternatively, adjust the fine-tuning sliders or select a preset from the dropdown (e.g. *Bank Teller*, *Web API Server*, *Drive-Thru*).
+   - For $M/M/1$: Input Arrival Rate ($\lambda$) and Service Rate ($\mu$).
+   - For $M/M/s$: Input Arrival Rate ($\lambda$), Service Rate per Server ($\mu$), and Number of Parallel Servers ($s$).
+   - You can also click domain presets (e.g. *Bank Teller*, *Airport Security*, *Call Center*).
 2. **Select Time Units**:
-   - Choose between **Hours**, **Minutes**, or **Seconds**. The calculator dynamically re-labels the rate units and computes time conversions for $W$ and $W_q$.
-3. **Inspect Real-Time Results**:
-   - The **Performance Measures** grid immediately displays $\rho, P_0, L_s, L_q, L_w, W_s, W_q$.
-   - The **Linear Algebra & Queuing Theory Formulas** section displays $P(N = n), P(N \ge k), P(T_s > t), P(T_q > t)$ and the 4-law Little's matrix.
-4. **Interact with the 3D Stage**:
-   - Drag with your mouse or finger to orbit around the 3D queue.
-   - Scroll to zoom; right-click to pan.
-   - Toggle camera views using the **Isometric**, **Top-Down**, and **Counter** buttons.
-   - Use the **Pause / Resume**, **Reset**, and **Speed Multiplier** buttons to control simulation dynamics.
-5. **Explore Charts**:
-   - Check the **State Probability Distribution** bar chart to see $P_n$ up to $n=12$.
-   - Review the **Congestion Explosion Curve** to visualize why queue sizes spike exponentially near $\rho = 1$.
-6. **Execute Automated Tests**:
-   - Scroll to the **Comprehensive Test Cases Suite**.
-   - Click **"Run All Test Cases"** to execute the batch validator.
-   - Click **"Load & Run"** on any individual test row to populate the calculator with that test's parameters and observe the behavior.
-7. **Export Results**:
-   - Click **"Copy Report"** in the top navigation bar to copy a formatted academic summary to your clipboard.
-   - Click **"Download CSV"** in the test suite section to download the test case data.
+   - Choose between **Hours**, **Minutes**, or **Seconds**. All rates and time metrics ($W, W_q$) dynamically update.
+3. **Inspect Real-Time Performance Measures**:
+   - Check $\rho, P_0, P(\text{wait}), L_s, L_q, W_s, W_q, L_w$.
+   - Review the **Little's Law Matrix** confirming mathematical conservation.
+4. **Interact with the 3D Simulation**:
+   - Drag to rotate camera; scroll to zoom; right-click to pan.
+   - Switch camera views (**Isometric**, **Top-Down**, **Counter Close-Up**).
+   - Use **Play / Pause**, **Reset**, and **Speed Multiplier** ($0.5\times, 1\times, 2\times, 4\times$) buttons.
+   - On $M/M/s$: Watch customers arrive through the stanchion line, transfer across the cross-aisle to their assigned counter, receive service, and walk down the green exit corridor out the Exit Arch.
+5. **Execute Automated Tests**:
+   - Scroll to the Test Cases section.
+   - Click **"Run All Test Cases"** to batch-validate all 8 cases against theoretical benchmarks.
+   - Click **"Load & Run"** on any row to populate and calculate that specific scenario.
+   - Click **"Download CSV"** to export the verification report.
+6. **Export Summary Report**:
+   - Click **"Copy Report"** in the top navigation bar to copy a formatted academic text report to your clipboard.
 
 ---
 
@@ -170,14 +189,13 @@ This repository is structured to deploy on GitHub Pages without any extra build 
 
 1. **Create a GitHub Repository**:
    - Go to [github.com/new](https://github.com/new).
-   - Name the repository (e.g., `mm1-queue-calculator`).
+   - Name the repository (e.g., `queueflow-3d`).
    - Set visibility to **Public** and click **Create repository**.
 
 2. **Push the Project Files**:
-   Open a terminal in this project folder and run:
    ```bash
    git add .
-   git commit -m "Complete (M/M/1):(inf/FIFO) 3D Queue Calculator & Simulator"
+   git commit -m "Complete M/M/1 and M/M/s 3D Queuing Platform & Calculators"
    git branch -M main
    git remote add origin https://github.com/<YOUR-USERNAME>/<YOUR-REPO-NAME>.git
    git push -u origin main
@@ -192,11 +210,10 @@ This repository is structured to deploy on GitHub Pages without any extra build 
      - **Folder**: select `/ (root)`
      - Click **Save**.
 
-4. **Access the Live Webpage**:
-   Within 30–60 seconds, GitHub Pages will deploy your site at:
-   ```
-   https://<YOUR-USERNAME>.github.io/<YOUR-REPO-NAME>/
-   ```
+4. **Access the Live Webpages**:
+   Within 30–60 seconds, GitHub Pages will deploy your site:
+   - **Single Server ($M/M/1$)**: `https://<YOUR-USERNAME>.github.io/<YOUR-REPO-NAME>/`
+   - **Multi Server ($M/M/s$)**: `https://<YOUR-USERNAME>.github.io/<YOUR-REPO-NAME>/mms.html`
 
 ---
 
@@ -232,7 +249,8 @@ maths_assingment1/
 ├── mms_test_cases.json                          # Verified M/M/s test cases (normal, boundary, overloaded, invalid)
 ├── verify_suite.py                              # Python test runner verifying M/M/1 against test_cases.json
 ├── verify_mms_suite.py                          # Python test runner verifying M/M/s against mms_test_cases.json
-└── README.md                                    # Comprehensive submission manual & user guide
+├── README.md                                    # Comprehensive platform manual & user guide
+└── README_MMS.md                                # Dedicated (M/M/s):(ꝏ/FIFO) multi-server documentation
 ```
 
 ---
@@ -240,12 +258,12 @@ maths_assingment1/
 ## 🛠️ Technologies Used
 
 - **HTML5 & Vanilla JavaScript (ES6+)**: High performance, zero compilation needed.
-- **Three.js (r128)**: WebGL 3D rendering of the single-server queue platform and animated customer entities.
-- **Chart.js (v4.4)**: Responsive data visualization for state distributions, multi-server scaling, and sensitivity curves.
+- **Three.js (r128)**: WebGL 3D rendering of parallel service platforms, articulated humanoid avatars, and dynamic floor runners.
+- **Chart.js (v4.4)**: Responsive data visualization for state distributions and multi-server capacity curves.
 - **KaTeX (v0.16)**: High-speed LaTeX mathematical typesetting for formulas.
 - **Lucide Icons**: Clean, modern iconography.
 - **CSS3 Glassmorphism**: Radial backdrop blurs, glowing cyber gradients, and responsive grid layouts.
-- **Python 3.11+**: Verification suite and automated CI testing.
+- **Python 3.11+**: Verification suites and automated CI testing.
 
 ---
 
